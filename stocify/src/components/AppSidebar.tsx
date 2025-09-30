@@ -16,6 +16,7 @@ import {
   Shield,
   List,
   ShoppingCart,
+  Percent,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,36 +53,21 @@ import {
 } from "./ui/collapsible";
 import { apiClient } from "@/lib/api";
 
-const items = [
+const itemsBeforeSells = [
   {
     title: "Home",
     url: "/",
     icon: Home,
   },
   {
-    title: "Products",
-    url: "/dashboard/products",
-    icon: Box,
+    title: "Roles",
+    url: "/dashboard/roles",
+    icon: Shield,
   },
   {
     title: "Users",
     url: "/dashboard/users",
     icon: Users,
-  },
-  {
-    title: "Orders",
-    url: "/dashboard/orders",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Stocks",
-    url: "/dashboard/stocks",
-    icon: Warehouse,
-  },
-  {
-    title: "Reports",
-    url: "#",
-    icon: ChartBar,
   },
   {
     title: "Suppliers",
@@ -92,6 +78,29 @@ const items = [
     title: "Categories",
     url: "/dashboard/categories",
     icon: List,
+  },
+  {
+    title: "Products",
+    url: "/dashboard/products",
+    icon: Box,
+  },
+  {
+    title: "Stocks",
+    url: "/dashboard/stocks",
+    icon: Warehouse,
+  },
+];
+
+const itemsAfterSells = [
+  {
+    title: "Taxes",
+    url: "/dashboard/taxes",
+    icon: Percent,
+  },
+  {
+    title: "Reports",
+    url: "#",
+    icon: ChartBar,
   },
 ];
 
@@ -135,7 +144,7 @@ const AppSidebar = () => {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {itemsBeforeSells.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link href={item.url}>
@@ -143,9 +152,58 @@ const AppSidebar = () => {
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
-                  {item.title === "Inbox" && (
-                    <SidebarMenuBadge>24</SidebarMenuBadge>
-                  )}
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        {/* Sells Collapsible Section */}
+        <Collapsible className="group/collapsible">
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger className="w-full">
+                <ShoppingCart />
+                Sells
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+              <SidebarGroupContent className="py-0">
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="/dashboard/create-order">
+                        <Plus />
+                        Create Sells
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="/dashboard/orders">
+                        <List />
+                        Manage Sells
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+        
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {itemsAfterSells.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -177,39 +235,6 @@ const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {/* COLLAPSABLE */}
-        <Collapsible defaultOpen className="group/collapsible">
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                Users and roles
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/dashboard/users">
-                        <Users />
-                        Users
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/dashboard/roles">
-                        <Shield />
-                        Roles
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
         {/* NESTED */}
         {/* <SidebarGroup>
           <SidebarGroupLabel>Nested Items</SidebarGroupLabel>

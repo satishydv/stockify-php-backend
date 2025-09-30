@@ -2,81 +2,92 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Order_model extends CI_Model {
-    
+
     public function __construct() {
         parent::__construct();
-        $this->load->database();
+        $this->load->database(); // Explicitly load database library
     }
-    
+
+    // Create a new order
+    public function create_order($data) {
+        return $this->db->insert('orders', $data);
+    }
+
+    // Add order items
+    public function add_order_items($items) {
+        return $this->db->insert_batch('order_items', $items);
+    }
+
+    // Get all orders
     public function get_all_orders() {
-        $this->db->order_by('order_date', 'DESC');
-        $query = $this->db->get('orders');
-        $orders = $query->result_array();
-        
-        // Transform the data to match frontend format
-        return array_map(function($order) {
-            return [
-                'id' => $order['id'],
-                'orderDate' => $order['order_date'],
-                'name' => $order['name'],
-                'sku' => $order['sku'],
-                'supplier' => $order['supplier'],
-                'category' => $order['category'],
-                'numberOfItems' => (int)$order['number_of_items'],
-                'status' => $order['status'],
-                'expectedDeliveryDate' => $order['expected_delivery_date'],
-                'totalAmount' => (float)$order['total_amount']
-            ];
-        }, $orders);
+        $this->db->order_by('created_at', 'DESC');
+        return $this->db->get('orders')->result_array();
     }
-    
+
+    // Get order by ID
     public function get_order_by_id($id) {
         $this->db->where('id', $id);
-        $query = $this->db->get('orders');
-        $order = $query->row_array();
-        
-        if ($order) {
-            return [
-                'id' => $order['id'],
-                'orderDate' => $order['order_date'],
-                'name' => $order['name'],
-                'sku' => $order['sku'],
-                'supplier' => $order['supplier'],
-                'category' => $order['category'],
-                'numberOfItems' => (int)$order['number_of_items'],
-                'status' => $order['status'],
-                'expectedDeliveryDate' => $order['expected_delivery_date'],
-                'totalAmount' => (float)$order['total_amount']
-            ];
-        }
-        
-        return null;
+        $result = $this->db->get('orders');
+        return $result->row_array();
     }
-    
-    public function create_order($data) {
-        $order_data = [
-            'order_date' => $data['order_date'],
-            'name' => $data['name'],
-            'sku' => $data['sku'],
-            'supplier' => $data['supplier'],
-            'category' => $data['category'],
-            'number_of_items' => $data['number_of_items'],
-            'status' => $data['status'],
-            'expected_delivery_date' => $data['expected_delivery_date'],
-            'total_amount' => $data['total_amount']
-        ];
-        
-        $this->db->insert('orders', $order_data);
-        return $this->db->insert_id();
+
+    // Get order items by order ID
+    public function get_order_items($order_id) {
+        $this->db->where('order_id', $order_id);
+        return $this->db->get('order_items')->result_array();
     }
-    
-    public function update_order($id, $data) {
+
+    // Update order status
+    public function update_order_status($id, $status) {
         $this->db->where('id', $id);
-        return $this->db->update('orders', $data);
+        return $this->db->update('orders', ['status' => $status]);
     }
-    
+
+    // Delete order (and its items)
     public function delete_order($id) {
+        $this->db->trans_begin();
+        
+        // Delete order items first
+        $this->db->where('order_id', $id);
+        $this->db->delete('order_items');
+        
+        // Delete order
         $this->db->where('id', $id);
-        return $this->db->delete('orders');
+        $this->db->delete('orders');
+        
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            return FALSE;
+        } else {
+            $this->db->trans_commit();
+            return TRUE;
+        }
+    }
+
+    // Get orders by date range
+    public function get_orders_by_date_range($start_date, $end_date) {
+        $this->db->where('order_date >=', $start_date);
+        $this->db->where('order_date <=', $end_date);
+        $this->db->order_by('order_date', 'DESC');
+        return $this->db->get('orders')->result_array();
+    }
+
+    // Get orders by customer
+    public function get_orders_by_customer($customer_name) {
+        $this->db->like('customer_name', $customer_name);
+        $this->db->order_by('created_at', 'DESC');
+        return $this->db->get('orders')->result_array();
+    }
+
+    // Get total sales amount
+    public function get_total_sales() {
+        $this->db->select_sum('total_amount');
+        $result = $this->db->get('orders');
+        return $result->row()->total_amount ?? 0;
+    }
+
+    // Get orders count
+    public function get_orders_count() {
+        return $this->db->count_all('orders');
     }
 }

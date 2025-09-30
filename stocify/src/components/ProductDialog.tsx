@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,13 +15,15 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { IoCheckmark, IoClose as IoCloseIcon, IoMail } from "react-icons/io5"
 import { useProductStore } from "@/stores/productStore"
+import { useCategoryStore } from "@/stores/categoryStore"
+import { useSupplierStore } from "@/stores/supplierStore"
 
 interface ProductFormData {
   name: string
   sku: string
-  price: string
+  purchase_price: string
+  sell_price: string
   category: string
   status: string
   quantity: string
@@ -31,31 +33,27 @@ interface ProductFormData {
 const initialFormData: ProductFormData = {
   name: "",
   sku: "",
-  price: "",
-  category: "Electronics",
+  purchase_price: "",
+  sell_price: "",
+  category: "",
   status: "published",
   quantity: "",
   supplier: ""
 }
-
-const categories = [
-  "Electronics",
-  "Furniture", 
-  "Clothing",
-  "Books",
-  "Toys",
-  "Beauty",
-  "Sports",
-  "Home Decor",
-  "Home Appliances",
-  "Others"
-]
 
 export default function ProductDialog() {
   const [formData, setFormData] = useState<ProductFormData>(initialFormData)
   const [errors, setErrors] = useState<Partial<ProductFormData>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const addProduct = useProductStore((state) => state.addProduct)
+  const { categories, fetchCategories } = useCategoryStore()
+  const { suppliers, fetchSuppliers } = useSupplierStore()
+
+  // Fetch categories and suppliers when component mounts
+  useEffect(() => {
+    fetchCategories()
+    fetchSuppliers()
+  }, [fetchCategories, fetchSuppliers])
 
   const handleInputChange = (field: keyof ProductFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -70,9 +68,11 @@ export default function ProductDialog() {
     
     if (!formData.name.trim()) newErrors.name = "The product name is required"
     if (!formData.sku.trim()) newErrors.sku = "The SKU ref is required"
-    if (!formData.price.trim()) newErrors.price = "The Price is required"
+    if (!formData.purchase_price.trim()) newErrors.purchase_price = "The Purchase Price is required"
+    if (!formData.sell_price.trim()) newErrors.sell_price = "The Sell Price is required"
     if (!formData.quantity.trim()) newErrors.quantity = "The quantity is required"
     if (!formData.supplier.trim()) newErrors.supplier = "Supplier's name is required"
+    if (!formData.category.trim()) newErrors.category = "Product category is required"
     
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -85,7 +85,8 @@ export default function ProductDialog() {
         await addProduct({
           name: formData.name,
           sku: formData.sku,
-          price: parseFloat(formData.price),
+          purchase_price: parseFloat(formData.purchase_price),
+          sell_price: parseFloat(formData.sell_price),
           category: formData.category,
           status: formData.status,
           quantityInStock: parseInt(formData.quantity),
@@ -108,16 +109,6 @@ export default function ProductDialog() {
     }
   }
 
-  const getStatusIcon = (status: ProductFormData["status"]) => {
-    switch (status) {
-      case "published":
-        return <IoCheckmark className="w-4 h-4" />
-      case "inactive":
-        return <IoCloseIcon className="w-4 h-4" />
-      case "draft":
-        return <IoMail className="w-4 h-4" />
-    }
-  }
 
   return (
     <Dialog>
@@ -184,13 +175,21 @@ export default function ProductDialog() {
           <div className="grid grid-cols-2 gap-5 items-center mt-3">
             <div className="flex flex-col gap-2">
               <Label htmlFor="supplier">Supplier's name</Label>
-              <Input
+              <select
                 id="supplier"
-                placeholder="TechWorld..."
                 value={formData.supplier}
                 onChange={(e) => handleInputChange("supplier", e.target.value)}
-                className={errors.supplier ? "border-red-500" : ""}
-              />
+                className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.supplier ? "border-red-500" : ""}`}
+              >
+                <option value="">Select a supplier...</option>
+                {suppliers
+                  .filter(supplier => supplier.status === 'active')
+                  .map((supplier) => (
+                    <option key={supplier.id} value={supplier.name}>
+                      {supplier.name}
+                    </option>
+                  ))}
+              </select>
               {errors.supplier && (
                 <div className="flex items-center gap-1 text-red-500 text-sm">
                   <div className="w-1 h-1 bg-red-500 rounded-full"></div>
@@ -205,35 +204,40 @@ export default function ProductDialog() {
                 id="category"
                 value={formData.category}
                 onChange={(e) => handleInputChange("category", e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.category ? "border-red-500" : ""}`}
               >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
+                <option value="">Select a category...</option>
+                {categories
+                  .filter(category => category.status === 'active')
+                  .map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
               </select>
+              {errors.category && (
+                <div className="flex items-center gap-1 text-red-500 text-sm">
+                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
+                  {errors.category}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Third row: Status, Quantity, and Price */}
-          <div className="mt-3 grid grid-cols-3 gap-7 max-lg:grid-cols-2 max-lg:gap-1 max-sm:grid-cols-1">
+          {/* Third row: Status, Quantity, Purchase Price, and Sell Price */}
+          <div className="mt-3 grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-lg:gap-1 max-sm:grid-cols-1">
             <div className="flex flex-col gap-2">
-              <Label>Status</Label>
-              <div className="flex gap-2">
-                {(["published", "inactive", "draft"] as const).map((status) => (
-                  <Button
-                    key={status}
-                    variant={formData.status === status ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleInputChange("status", status)}
-                    className="flex items-center gap-1"
-                  >
-                    {getStatusIcon(status)}
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </Button>
-                ))}
-              </div>
+              <Label htmlFor="status">Status</Label>
+              <select
+                id="status"
+                value={formData.status}
+                onChange={(e) => handleInputChange("status", e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="published">Published</option>
+                <option value="inactive">Inactive</option>
+                <option value="draft">Draft</option>
+              </select>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -255,20 +259,39 @@ export default function ProductDialog() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="price">Price</Label>
+              <Label htmlFor="purchase_price">Purchase Price</Label>
               <Input
-                id="price"
+                id="purchase_price"
                 type="number"
                 step="0.01"
                 placeholder="0"
-                value={formData.price}
-                onChange={(e) => handleInputChange("price", e.target.value)}
-                className={errors.price ? "border-red-500" : ""}
+                value={formData.purchase_price}
+                onChange={(e) => handleInputChange("purchase_price", e.target.value)}
+                className={errors.purchase_price ? "border-red-500" : ""}
               />
-              {errors.price && (
+              {errors.purchase_price && (
                 <div className="flex items-center gap-1 text-red-500 text-sm">
                   <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                  {errors.price}
+                  {errors.purchase_price}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="sell_price">Sell Price</Label>
+              <Input
+                id="sell_price"
+                type="number"
+                step="0.01"
+                placeholder="0"
+                value={formData.sell_price}
+                onChange={(e) => handleInputChange("sell_price", e.target.value)}
+                className={errors.sell_price ? "border-red-500" : ""}
+              />
+              {errors.sell_price && (
+                <div className="flex items-center gap-1 text-red-500 text-sm">
+                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
+                  {errors.sell_price}
                 </div>
               )}
             </div>

@@ -8,12 +8,14 @@ export type Product = {
   id: string
   name: string
   sku: string
-  price: number
+  purchase_price: number
+  sell_price: number
   category: string
   status: "published" | "inactive" | "draft"
   quantityInStock: number
   supplier: string
   icon: string
+  createdAt?: string
 }
 
 export const products: Product[] = [
@@ -21,7 +23,8 @@ export const products: Product[] = [
     id: "1",
     name: "Screwdriver",
     sku: "SD123",
-    price: 12.99,
+    purchase_price: 12.99,
+    sell_price: 15.99,
     category: "Others",
     status: "draft",
     quantityInStock: 50,
@@ -32,7 +35,8 @@ export const products: Product[] = [
     id: "2",
     name: "Hammer",
     sku: "HM456",
-    price: 15.50,
+    purchase_price: 15.50,
+    sell_price: 19.50,
     category: "Others",
     status: "published",
     quantityInStock: 30,
@@ -43,7 +47,8 @@ export const products: Product[] = [
     id: "3",
     name: "Smartphone",
     sku: "SP789",
-    price: 499.99,
+    purchase_price: 499.99,
+    sell_price: 599.99,
     category: "Electronics",
     status: "published",
     quantityInStock: 100,
@@ -54,7 +59,8 @@ export const products: Product[] = [
     id: "4",
     name: "Laptop",
     sku: "LT101",
-    price: 899.99,
+    purchase_price: 899.99,
+    sell_price: 1099.99,
     category: "Electronics",
     status: "inactive",
     quantityInStock: 25,
@@ -65,7 +71,8 @@ export const products: Product[] = [
     id: "5",
     name: "Microwave Oven",
     sku: "MO202",
-    price: 120.00,
+    purchase_price: 120.00,
+    sell_price: 150.00,
     category: "Furniture",
     status: "draft",
     quantityInStock: 15,
@@ -76,7 +83,8 @@ export const products: Product[] = [
     id: "6",
     name: "Washing Machine",
     sku: "WM303",
-    price: 450.00,
+    purchase_price: 450.00,
+    sell_price: 550.00,
     category: "Home Decor",
     status: "published",
     quantityInStock: 10,
@@ -87,7 +95,8 @@ export const products: Product[] = [
     id: "7",
     name: "Refrigerator",
     sku: "RF404",
-    price: 799.99,
+    purchase_price: 799.99,
+    sell_price: 999.99,
     category: "Home Appliances",
     status: "inactive",
     quantityInStock: 8,
@@ -98,7 +107,8 @@ export const products: Product[] = [
     id: "8",
     name: "Tablet",
     sku: "TB505",
-    price: 199.99,
+    purchase_price: 199.99,
+    sell_price: 249.99,
     category: "Electronics",
     status: "draft",
     quantityInStock: 60,

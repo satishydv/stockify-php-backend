@@ -1,16 +1,15 @@
 -- Products table structure
 CREATE TABLE `products` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `sku` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `product_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `category` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `quantity_available` int(11) NOT NULL DEFAULT 0,
-  `minimum_stock_level` int(11) NOT NULL DEFAULT 10,
-  `maximum_stock_level` int(11) NOT NULL DEFAULT 1000,
-  `status` enum('active','high','low','out_of_stock') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
-  `unit_cost` decimal(10,2) DEFAULT 0.00,
-  `supplier` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `last_updated` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `purchase_price` decimal(10,2) DEFAULT 0.00,
+  `category` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` enum('draft','published','inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'draft',
+  `quantity_in_stock` int(11) DEFAULT 0,
+  `supplier` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `sell_price` decimal(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

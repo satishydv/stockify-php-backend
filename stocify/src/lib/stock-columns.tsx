@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Stock, getStockStatusBadge } from "./stock-data"
+import { Stock } from "./stock-data"
 import { useStockStore } from "@/stores/stockStore"
 import { Button } from "@/components/ui/button"
 import {
@@ -60,21 +60,13 @@ export const useStockColumns = (onEditStock?: (stock: Stock) => void): ColumnDef
       },
     },
     {
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: "purchase_price",
+      header: "Purchase Price",
       cell: ({ row }) => {
-        const status = row.getValue("status") as Stock["status"]
-        return getStockStatusBadge(status)
-      },
-    },
-    {
-      accessorKey: "unitCost",
-      header: "Unit Cost",
-      cell: ({ row }) => {
-        const cost = parseFloat(row.getValue("unitCost"))
-        const formatted = new Intl.NumberFormat("en-US", {
+        const cost = parseFloat(row.getValue("purchase_price"))
+        const formatted = new Intl.NumberFormat("en-IN", {
           style: "currency",
-          currency: "USD",
+          currency: "INR",
         }).format(cost)
         return <span className="font-medium">{formatted}</span>
       },

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { IoCheckmark, IoClose as IoCloseIcon, IoMail, IoTime, IoCar, IoCheckmarkCircle } from "react-icons/io5"
 import { useOrderStore } from "@/stores/orderStore"
+import { useCategoryStore } from "@/stores/categoryStore"
+import { useSupplierStore } from "@/stores/supplierStore"
 
 interface OrderFormData {
   orderDate: string
@@ -35,39 +37,25 @@ const initialFormData: OrderFormData = {
   name: "",
   sku: "",
   supplier: "",
-  category: "Electronics",
+  category: "",
   numberOfItems: "",
   status: "new",
   expectedDeliveryDate: "",
   totalAmount: ""
 }
 
-const categories = [
-  "Electronics",
-  "Furniture", 
-  "Clothing",
-  "Books",
-  "Toys",
-  "Beauty",
-  "Sports",
-  "Home Decor",
-  "Home Appliances",
-  "Others"
-]
-
-const suppliers = [
-  "TechWorld",
-  "ToolSupplier Inc.",
-  "HomeGoods Co.",
-  "ElectroMax",
-  "BuildCorp"
-]
-
-
 export default function OrderDialog() {
   const [formData, setFormData] = useState<OrderFormData>(initialFormData)
   const [errors, setErrors] = useState<Partial<OrderFormData>>({})
   const addOrder = useOrderStore((state) => state.addOrder)
+  const { categories, fetchCategories } = useCategoryStore()
+  const { suppliers, fetchSuppliers } = useSupplierStore()
+
+  // Fetch categories and suppliers when component mounts
+  useEffect(() => {
+    fetchCategories()
+    fetchSuppliers()
+  }, [fetchCategories, fetchSuppliers])
 
   const handleInputChange = (field: keyof OrderFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -83,6 +71,7 @@ export default function OrderDialog() {
     if (!formData.name.trim()) newErrors.name = "Product name is required"
     if (!formData.sku.trim()) newErrors.sku = "SKU is required"
     if (!formData.supplier.trim()) newErrors.supplier = "Supplier is required"
+    if (!formData.category.trim()) newErrors.category = "Category is required"
     if (!formData.numberOfItems.trim()) newErrors.numberOfItems = "Number of items is required"
     if (!formData.expectedDeliveryDate.trim()) newErrors.expectedDeliveryDate = "Expected delivery date is required"
     if (!formData.totalAmount.trim()) newErrors.totalAmount = "Total amount is required"
@@ -211,14 +200,16 @@ export default function OrderDialog() {
                 id="supplier"
                 value={formData.supplier}
                 onChange={(e) => handleInputChange("supplier", e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.supplier ? "border-red-500" : ""}`}
               >
                 <option value="">Select a supplier</option>
-                {suppliers.map((supplier) => (
-                  <option key={supplier} value={supplier}>
-                    {supplier}
-                  </option>
-                ))}
+                {suppliers
+                  .filter(supplier => supplier.status === 'active')
+                  .map((supplier) => (
+                    <option key={supplier.id} value={supplier.name}>
+                      {supplier.name}
+                    </option>
+                  ))}
               </select>
               {errors.supplier && (
                 <div className="flex items-center gap-1 text-red-500 text-sm">
@@ -237,14 +228,23 @@ export default function OrderDialog() {
                 id="category"
                 value={formData.category}
                 onChange={(e) => handleInputChange("category", e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.category ? "border-red-500" : ""}`}
               >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
+                <option value="">Select a category</option>
+                {categories
+                  .filter(category => category.status === 'active')
+                  .map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
               </select>
+              {errors.category && (
+                <div className="flex items-center gap-1 text-red-500 text-sm">
+                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
+                  {errors.category}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">

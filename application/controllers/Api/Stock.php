@@ -46,7 +46,7 @@ class Stock extends CI_Controller {
         $input = json_decode($this->input->raw_input_stream, true);
         
         // Validate required fields
-        $required_fields = ['sku', 'productName', 'category', 'quantityAvailable', 'minimumStockLevel', 'maximumStockLevel', 'unitCost', 'supplier'];
+        $required_fields = ['sku', 'productName', 'category', 'quantityAvailable', 'minimumStockLevel', 'maximumStockLevel', 'purchase_price', 'supplier'];
         foreach ($required_fields as $field) {
             if (!isset($input[$field])) {
                 $this->output
@@ -79,7 +79,7 @@ class Stock extends CI_Controller {
             'minimum_stock_level' => $input['minimumStockLevel'],
             'maximum_stock_level' => $input['maximumStockLevel'],
             'status' => isset($input['status']) ? $input['status'] : 'active',
-            'unit_cost' => $input['unitCost'],
+            'purchase_price' => $input['purchase_price'],
             'supplier' => $input['supplier']
         ];
         
@@ -161,8 +161,8 @@ class Stock extends CI_Controller {
             $update_data['status'] = $input['status'];
         }
         
-        if (isset($input['unitCost'])) {
-            $update_data['unit_cost'] = $input['unitCost'];
+        if (isset($input['purchase_price'])) {
+            $update_data['purchase_price'] = $input['purchase_price'];
         }
         
         if (isset($input['supplier'])) {

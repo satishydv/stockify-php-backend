@@ -25,7 +25,8 @@ export const useProductColumns = () => {
       id: product.id,
       name: product.name,
       sku: product.sku,
-      price: product.price,
+      purchase_price: product.purchase_price,
+      sell_price: product.sell_price,
       category: product.category,
       status: product.status,
       quantityInStock: product.quantityInStock,
@@ -80,15 +81,27 @@ export const useProductColumns = () => {
     },
   },
   {
-    accessorKey: "price",
-    header: "Price",
+    accessorKey: "purchase_price",
+    header: "Purchase Price",
     cell: ({ row }) => {
-      const price = parseFloat(row.getValue("price"))
+      const price = parseFloat(row.getValue("purchase_price"))
       const formatted = new Intl.NumberFormat("en-IN", {
         style: "currency",
         currency: "INR",
       }).format(price)
       return <span className="font-medium">{formatted}</span>
+    },
+  },
+  {
+    accessorKey: "sell_price",
+    header: "Sell Price",
+    cell: ({ row }) => {
+      const price = parseFloat(row.getValue("sell_price"))
+      const formatted = new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+      }).format(price)
+      return <span className="font-medium text-green-600">{formatted}</span>
     },
   },
   {
@@ -118,6 +131,24 @@ export const useProductColumns = () => {
     header: "Supplier",
     cell: ({ row }) => {
       return <span className="text-muted-foreground">{row.getValue("supplier")}</span>
+    },
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Created At",
+    cell: ({ row }) => {
+      const date = row.getValue("createdAt") as string
+      if (!date) return <span className="text-muted-foreground">-</span>
+      
+      const formattedDate = new Date(date).toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+      
+      return <span className="text-muted-foreground text-sm">{formattedDate}</span>
     },
   },
   {

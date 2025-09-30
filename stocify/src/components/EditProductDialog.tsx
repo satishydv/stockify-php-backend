@@ -13,7 +13,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { IoCheckmark, IoClose as IoCloseIcon, IoMail } from "react-icons/io5"
 import { useProductStore } from "@/stores/productStore"
 import { Product } from "@/lib/product-data"
 import { toast } from "sonner"
@@ -21,7 +20,8 @@ import { toast } from "sonner"
 interface EditProductFormData {
   name: string
   sku: string
-  price: string
+  purchase_price: string
+  sell_price: string
   category: string
   status: string
   quantity: string
@@ -51,7 +51,8 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
   const [formData, setFormData] = useState<EditProductFormData>({
     name: "",
     sku: "",
-    price: "",
+    purchase_price: "",
+    sell_price: "",
     category: "Electronics",
     status: "published",
     quantity: "",
@@ -67,7 +68,8 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
       setFormData({
         name: product.name || "",
         sku: product.sku || "",
-        price: product.price?.toString() || "",
+        purchase_price: product.purchase_price?.toString() || "",
+        sell_price: product.sell_price?.toString() || "",
         category: product.category || "Electronics",
         status: product.status || "published",
         quantity: product.quantityInStock?.toString() || "",
@@ -90,7 +92,8 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
     
     if (!formData.name.trim()) newErrors.name = "The product name is required"
     if (!formData.sku.trim()) newErrors.sku = "The SKU ref is required"
-    if (!formData.price.trim()) newErrors.price = "The Price is required"
+    if (!formData.purchase_price.trim()) newErrors.purchase_price = "The Purchase Price is required"
+    if (!formData.sell_price.trim()) newErrors.sell_price = "The Sell Price is required"
     if (!formData.quantity.trim()) newErrors.quantity = "The quantity is required"
     if (!formData.supplier.trim()) newErrors.supplier = "Supplier's name is required"
     
@@ -106,7 +109,8 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
       await updateProduct(product.id, {
         name: formData.name,
         sku: formData.sku,
-        price: parseFloat(formData.price),
+        purchase_price: parseFloat(formData.purchase_price),
+        sell_price: parseFloat(formData.sell_price),
         category: formData.category,
         status: formData.status,
         quantityInStock: parseInt(formData.quantity),
@@ -127,18 +131,6 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
     }
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "published":
-        return <IoCheckmark className="w-4 h-4" />
-      case "inactive":
-        return <IoCloseIcon className="w-4 h-4" />
-      case "draft":
-        return <IoMail className="w-4 h-4" />
-      default:
-        return <IoCheckmark className="w-4 h-4" />
-    }
-  }
 
   if (!product) return null
 
@@ -229,32 +221,21 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
 
           {/* Third row: Status */}
           <div className="flex flex-col gap-2">
-            <Label>Status</Label>
-            <div className="flex gap-3">
-              {[
-                { value: "published", label: "Published", icon: getStatusIcon("published") },
-                { value: "inactive", label: "Inactive", icon: getStatusIcon("inactive") },
-                { value: "draft", label: "Draft", icon: getStatusIcon("draft") }
-              ].map((status) => (
-                <button
-                  key={status.value}
-                  type="button"
-                  onClick={() => handleInputChange("status", status.value)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                    formData.status === status.value
-                      ? "bg-gray-800 text-white border-gray-800"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  {status.icon}
-                  {status.label}
-                </button>
-              ))}
-            </div>
+            <Label htmlFor="edit-status">Status</Label>
+            <select
+              id="edit-status"
+              value={formData.status}
+              onChange={(e) => handleInputChange("status", e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="published">Published</option>
+              <option value="inactive">Inactive</option>
+              <option value="draft">Draft</option>
+            </select>
           </div>
 
-          {/* Fourth row: Quantity and Price */}
-          <div className="grid grid-cols-2 gap-7">
+          {/* Fourth row: Quantity, Purchase Price, and Sell Price */}
+          <div className="grid grid-cols-3 gap-7">
             <div className="flex flex-col gap-2">
               <Label htmlFor="edit-quantity">Quantity</Label>
               <Input
@@ -274,20 +255,39 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-price">Price</Label>
+              <Label htmlFor="edit-purchase_price">Purchase Price</Label>
               <Input
-                id="edit-price"
+                id="edit-purchase_price"
                 type="number"
                 step="0.01"
                 placeholder="0"
-                value={formData.price}
-                onChange={(e) => handleInputChange("price", e.target.value)}
-                className={errors.price ? "border-red-500" : ""}
+                value={formData.purchase_price}
+                onChange={(e) => handleInputChange("purchase_price", e.target.value)}
+                className={errors.purchase_price ? "border-red-500" : ""}
               />
-              {errors.price && (
+              {errors.purchase_price && (
                 <div className="flex items-center gap-1 text-red-500 text-sm">
                   <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                  {errors.price}
+                  {errors.purchase_price}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="edit-sell_price">Sell Price</Label>
+              <Input
+                id="edit-sell_price"
+                type="number"
+                step="0.01"
+                placeholder="0"
+                value={formData.sell_price}
+                onChange={(e) => handleInputChange("sell_price", e.target.value)}
+                className={errors.sell_price ? "border-red-500" : ""}
+              />
+              {errors.sell_price && (
+                <div className="flex items-center gap-1 text-red-500 text-sm">
+                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
+                  {errors.sell_price}
                 </div>
               )}
             </div>

@@ -5,206 +5,212 @@ class Orders extends CI_Controller {
     
     public function __construct() {
         parent::__construct();
+        $this->load->database(); // Explicitly load database library
         $this->load->model('Order_model');
+        $this->load->library('upload');
+        $this->load->helper('file');
+        $this->load->helper('url');
     }
-    
+
     public function index() {
-        $orders = $this->Order_model->get_all_orders();
-        
-        $this->output
-            ->set_status_header(200)
-            ->set_content_type('application/json')
-            ->set_output(json_encode([
-                'success' => true,
-                'orders' => $orders
-            ]));
-    }
-    
-    public function show($id) {
-        $order = $this->Order_model->get_order_by_id($id);
-        
-        if (!$order) {
+        if ($this->input->method() === 'post') {
+            $this->create_order();
+        } else {
             $this->output
-                ->set_status_header(404)
+                ->set_status_header(405)
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
-                    'error' => 'Order not found'
+                    'status' => FALSE,
+                    'message' => 'Method not allowed'
                 ]));
-            return;
         }
-        
-        $this->output
-            ->set_status_header(200)
-            ->set_content_type('application/json')
-            ->set_output(json_encode([
-                'success' => true,
-                'order' => $order
-            ]));
     }
-    
-    public function create() {
-        $input = json_decode($this->input->raw_input_stream, true);
-        
-        // Validate required fields
-        $required_fields = ['orderDate', 'name', 'sku', 'supplier', 'category', 'numberOfItems', 'totalAmount'];
-        foreach ($required_fields as $field) {
-            if (!isset($input[$field])) {
+
+    private function create_order() {
+        try {
+            // Debug: Log the incoming request
+            log_message('debug', 'Order creation request received');
+            log_message('debug', 'POST data: ' . print_r($this->input->post(), TRUE));
+            log_message('debug', 'FILES data: ' . print_r($_FILES, TRUE));
+            
+            // Test database connection
+            if (!$this->db->conn_id) {
+                throw new Exception("Database connection failed");
+            }
+            
+            // Test if tables exist
+            if (!$this->db->table_exists('orders')) {
+                throw new Exception("Orders table does not exist");
+            }
+            
+            if (!$this->db->table_exists('order_items')) {
+                throw new Exception("Order_items table does not exist");
+            }
+
+            // 1. Handle File Upload (Payment Attachment)
+            $payment_attachment_path = NULL;
+            if (!empty($_FILES['payment_attachment']['name'])) {
+                // Check if upload directory exists and is writable
+                $upload_path = './public/payments/';
+                if (!is_dir($upload_path)) {
+                    throw new Exception("Upload directory does not exist: " . $upload_path);
+                }
+                if (!is_writable($upload_path)) {
+                    throw new Exception("Upload directory is not writable: " . $upload_path);
+                }
+                
+                $config['upload_path'] = $upload_path;
+                $config['allowed_types'] = 'gif|jpg|png|pdf';
+                $config['max_size'] = 2048; // 2MB
+                $config['encrypt_name'] = TRUE;
+
+                $this->upload->initialize($config);
+
+                if ($this->upload->do_upload('payment_attachment')) {
+                    $upload_data = $this->upload->data();
+                    $payment_attachment_path = 'public/payments/' . $upload_data['file_name'];
+                } else {
+                    $this->output
+                        ->set_status_header(400)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode([
+                            'status' => FALSE,
+                            'message' => 'File upload failed: ' . $this->upload->display_errors()
+                        ]));
+                    return;
+                }
+            }
+
+            // 2. Generate Order ID
+            $order_id = 'ORD' . uniqid();
+
+            // 3. Prepare Order Data
+            $order_data = [
+                'id' => $order_id,
+                'customer_name' => $this->input->post('customer_name'),
+                'mobile_no' => $this->input->post('mobile_no'),
+                'order_date' => $this->input->post('order_date'),
+                'subtotal' => $this->input->post('subtotal'),
+                'tax_rate' => $this->input->post('tax_rate'),
+                'tax_amount' => $this->input->post('tax_amount'),
+                'total_amount' => $this->input->post('total_amount'),
+                'status' => $this->input->post('status'),
+                'payment_method' => $this->input->post('payment_method'),
+                'transaction_id' => $this->input->post('transaction_id'),
+                'payment_attachment' => $payment_attachment_path,
+                'payment_date' => $this->input->post('payment_date'),
+            ];
+
+            // 4. Prepare Order Items
+            $cart_items_json = $this->input->post('items');
+            $cart_items = json_decode($cart_items_json, TRUE);
+
+            if (empty($cart_items)) {
                 $this->output
                     ->set_status_header(400)
                     ->set_content_type('application/json')
                     ->set_output(json_encode([
-                        'error' => "Field '{$field}' is required"
+                        'status' => FALSE,
+                        'message' => 'No items in the order'
                     ]));
                 return;
             }
-        }
-        
-        // Prepare order data
-        $order_data = [
-            'order_date' => $input['orderDate'],
-            'name' => $input['name'],
-            'sku' => $input['sku'],
-            'supplier' => $input['supplier'],
-            'category' => $input['category'],
-            'number_of_items' => $input['numberOfItems'],
-            'status' => isset($input['status']) ? $input['status'] : 'new',
-            'expected_delivery_date' => isset($input['expectedDeliveryDate']) ? $input['expectedDeliveryDate'] : null,
-            'total_amount' => $input['totalAmount']
-        ];
-        
-        $order_id = $this->Order_model->create_order($order_data);
-        
-        if ($order_id) {
-            $order = $this->Order_model->get_order_by_id($order_id);
+
+            $order_items_data = [];
+            foreach ($cart_items as $item) {
+                $order_items_data[] = [
+                    'order_id' => $order_id,
+                    'product_id' => $item['product_id'],
+                    'product_name' => $item['product_name'],
+                    'product_sku' => $item['product_sku'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'subtotal' => $item['subtotal'],
+                ];
+            }
+
+            // 5. Save to Database
+            $this->db->trans_begin();
+
+            try {
+                // Insert order
+                $order_result = $this->Order_model->create_order($order_data);
+                if (!$order_result) {
+                    throw new Exception("Failed to create order");
+                }
+
+                // Insert order items
+                $items_result = $this->Order_model->add_order_items($order_items_data);
+                if (!$items_result) {
+                    throw new Exception("Failed to create order items");
+                }
+
+                if ($this->db->trans_status() === FALSE) {
+                    $this->db->trans_rollback();
+                    throw new Exception("Database transaction failed");
+                } else {
+                    $this->db->trans_commit();
+                    $this->output
+                        ->set_status_header(201)
+                        ->set_content_type('application/json')
+                        ->set_output(json_encode([
+                            'status' => TRUE,
+                            'message' => 'Order created successfully!',
+                            'order_id' => $order_id,
+                            'data' => [
+                                'order' => $order_data,
+                                'items_count' => count($order_items_data)
+                            ]
+                        ]));
+                }
+            } catch (Exception $e) {
+                $this->db->trans_rollback();
+                throw $e; // Re-throw to outer catch
+            }
+
+        } catch (Exception $e) {
+            log_message('error', 'Order creation failed: ' . $e->getMessage());
             $this->output
-                ->set_status_header(201)
+                ->set_status_header(500)
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
-                    'success' => true,
-                    'message' => 'Order created successfully',
+                    'status' => FALSE,
+                    'message' => 'Error creating order: ' . $e->getMessage()
+                ]));
+        }
+    }
+
+    // Get all orders
+    public function get_orders() {
+        $orders = $this->Order_model->get_all_orders();
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'status' => TRUE,
+                'orders' => $orders
+            ]));
+    }
+
+    // Get order by ID
+    public function get_order($id) {
+        $order = $this->Order_model->get_order_by_id($id);
+        if ($order) {
+            $order_items = $this->Order_model->get_order_items($id);
+            $order['items'] = $order_items;
+            
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'status' => TRUE,
                     'order' => $order
                 ]));
         } else {
             $this->output
-                ->set_status_header(500)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'error' => 'Failed to create order'
-                ]));
-        }
-    }
-    
-    public function update($id) {
-        $input = json_decode($this->input->raw_input_stream, true);
-        
-        $order = $this->Order_model->get_order_by_id($id);
-        if (!$order) {
-            $this->output
                 ->set_status_header(404)
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
-                    'error' => 'Order not found'
-                ]));
-            return;
-        }
-        
-        // Prepare update data
-        $update_data = [];
-        
-        if (isset($input['orderDate'])) {
-            $update_data['order_date'] = $input['orderDate'];
-        }
-        
-        if (isset($input['name'])) {
-            $update_data['name'] = $input['name'];
-        }
-        
-        if (isset($input['sku'])) {
-            $update_data['sku'] = $input['sku'];
-        }
-        
-        if (isset($input['supplier'])) {
-            $update_data['supplier'] = $input['supplier'];
-        }
-        
-        if (isset($input['category'])) {
-            $update_data['category'] = $input['category'];
-        }
-        
-        if (isset($input['numberOfItems'])) {
-            $update_data['number_of_items'] = $input['numberOfItems'];
-        }
-        
-        if (isset($input['status'])) {
-            $update_data['status'] = $input['status'];
-        }
-        
-        if (isset($input['expectedDeliveryDate'])) {
-            $update_data['expected_delivery_date'] = $input['expectedDeliveryDate'];
-        }
-        
-        if (isset($input['totalAmount'])) {
-            $update_data['total_amount'] = $input['totalAmount'];
-        }
-        
-        if (empty($update_data)) {
-            $this->output
-                ->set_status_header(400)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'error' => 'No valid fields to update'
-                ]));
-            return;
-        }
-        
-        $update_data['updated_at'] = date('Y-m-d H:i:s');
-        
-        if ($this->Order_model->update_order($id, $update_data)) {
-            $updated_order = $this->Order_model->get_order_by_id($id);
-            $this->output
-                ->set_status_header(200)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'success' => true,
-                    'message' => 'Order updated successfully',
-                    'order' => $updated_order
-                ]));
-        } else {
-            $this->output
-                ->set_status_header(500)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'error' => 'Failed to update order'
-                ]));
-        }
-    }
-    
-    public function delete($id) {
-        $order = $this->Order_model->get_order_by_id($id);
-        if (!$order) {
-            $this->output
-                ->set_status_header(404)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'error' => 'Order not found'
-                ]));
-            return;
-        }
-        
-        if ($this->Order_model->delete_order($id)) {
-            $this->output
-                ->set_status_header(200)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'success' => true,
-                    'message' => 'Order deleted successfully'
-                ]));
-        } else {
-            $this->output
-                ->set_status_header(500)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'error' => 'Failed to delete order'
+                    'status' => FALSE,
+                    'message' => 'Order not found'
                 ]));
         }
     }

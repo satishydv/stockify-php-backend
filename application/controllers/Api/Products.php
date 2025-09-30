@@ -8,6 +8,7 @@ class Products extends CI_Controller {
         $this->load->model('Product_model');
         $this->load->model('Category_model');
         $this->load->model('Supplier_model');
+        $this->load->model('Stock_model');
     }
     
     public function index() {
@@ -76,7 +77,7 @@ class Products extends CI_Controller {
         $input = json_decode($this->input->raw_input_stream, true);
         
         // Validate required fields
-        $required_fields = ['name', 'sku', 'price', 'category', 'supplier', 'quantityInStock'];
+        $required_fields = ['name', 'sku', 'purchase_price', 'sell_price', 'category', 'supplier', 'quantityInStock'];
         foreach ($required_fields as $field) {
             if (!isset($input[$field])) {
                 $this->output
@@ -104,7 +105,8 @@ class Products extends CI_Controller {
         $product_data = [
             'name' => $input['name'],
             'sku' => $input['sku'],
-            'price' => $input['price'],
+            'purchase_price' => $input['purchase_price'],
+            'sell_price' => $input['sell_price'],
             'category' => $input['category'],
             'supplier' => $input['supplier'],
             'status' => isset($input['status']) ? $input['status'] : 'draft',
@@ -116,13 +118,28 @@ class Products extends CI_Controller {
         $product_id = $this->Product_model->create_product($product_data);
         
         if ($product_id) {
+            // Automatically create stock entry for the new product
+            $stock_data = [
+                'sku' => $input['sku'],
+                'product_name' => $input['name'],
+                'category' => $input['category'],
+                'quantity_available' => $input['quantityInStock'],
+                'minimum_stock_level' => 10, // Default value
+                'maximum_stock_level' => 1000, // Default value
+                'status' => isset($input['status']) ? $input['status'] : 'draft',
+                'purchase_price' => $input['purchase_price'],
+                'supplier' => $input['supplier']
+            ];
+            
+            $stock_id = $this->Stock_model->create_stock($stock_data);
+            
             $product = $this->Product_model->get_product_by_id($product_id);
             $this->output
                 ->set_status_header(201)
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
                     'success' => true,
-                    'message' => 'Product created successfully',
+                    'message' => 'Product and stock entry created successfully',
                     'product' => $product
                 ]));
         } else {
@@ -167,13 +184,49 @@ class Products extends CI_Controller {
         $update_data = $input;
         
         if ($this->Product_model->update_product($id, $update_data)) {
+            // Also update the corresponding stock entry
+            $stock_update_data = [];
+            
+            if (isset($input['sku'])) {
+                $stock_update_data['sku'] = $input['sku'];
+            }
+            if (isset($input['name'])) {
+                $stock_update_data['product_name'] = $input['name'];
+            }
+            if (isset($input['category'])) {
+                $stock_update_data['category'] = $input['category'];
+            }
+            if (isset($input['quantityInStock'])) {
+                $stock_update_data['quantity_available'] = $input['quantityInStock'];
+            }
+            if (isset($input['status'])) {
+                $stock_update_data['status'] = $input['status'];
+            }
+            if (isset($input['purchase_price'])) {
+                $stock_update_data['purchase_price'] = $input['purchase_price'];
+            }
+            if (isset($input['supplier'])) {
+                $stock_update_data['supplier'] = $input['supplier'];
+            }
+            
+            // Find and update the stock entry by SKU
+            if (!empty($stock_update_data)) {
+                $original_product = $this->Product_model->get_product_by_id($id);
+                if ($original_product) {
+                    $stock_entry = $this->Stock_model->get_stock_by_sku($original_product['sku']);
+                    if ($stock_entry) {
+                        $this->Stock_model->update_stock($stock_entry['id'], $stock_update_data);
+                    }
+                }
+            }
+            
             $updated_product = $this->Product_model->get_product_by_id($id);
             $this->output
                 ->set_status_header(200)
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
                     'success' => true,
-                    'message' => 'Product updated successfully',
+                    'message' => 'Product and stock entry updated successfully',
                     'product' => $updated_product
                 ]));
         } else {
@@ -199,12 +252,18 @@ class Products extends CI_Controller {
         }
         
         if ($this->Product_model->delete_product($id)) {
+            // Also delete the corresponding stock entry
+            $stock_entry = $this->Stock_model->get_stock_by_sku($product['sku']);
+            if ($stock_entry) {
+                $this->Stock_model->delete_stock($stock_entry['id']);
+            }
+            
             $this->output
                 ->set_status_header(200)
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
                     'success' => true,
-                    'message' => 'Product deleted successfully'
+                    'message' => 'Product and stock entry deleted successfully'
                 ]));
         } else {
             $this->output

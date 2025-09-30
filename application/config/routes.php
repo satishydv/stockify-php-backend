@@ -101,3 +101,10 @@ $route['api/roles/(:num)'] = 'api/roles/show/$1';
 $route['api/roles/create'] = 'api/roles/create';
 $route['api/roles/update/(:num)'] = 'api/roles/update/$1';
 $route['api/roles/delete/(:num)'] = 'api/roles/delete/$1';
+
+$route['api/taxes'] = 'api/taxes/index';
+$route['api/taxes/(:num)'] = 'api/taxes/get/$1';
+$route['api/taxes/create'] = 'api/taxes/create';
+$route['api/taxes/update/(:num)'] = 'api/taxes/update/$1';
+$route['api/taxes/delete/(:num)'] = 'api/taxes/delete/$1';
+$route['api/taxes/bulk-update-status'] = 'api/taxes/bulk_update_status';

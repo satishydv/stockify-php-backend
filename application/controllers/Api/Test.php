@@ -5,69 +5,42 @@ class Test extends CI_Controller {
     
     public function __construct() {
         parent::__construct();
+        $this->load->database(); // Load database library
     }
-    
+
     public function index() {
-        // Clean output buffer
-        if (ob_get_level()) {
-            ob_clean();
-        }
-        
-        $this->output
-            ->set_status_header(200)
-            ->set_content_type('application/json')
-            ->set_output(json_encode([
-                'success' => true,
-                'message' => 'API is working',
-                'timestamp' => date('Y-m-d H:i:s')
-            ]));
-    }
-    
-    public function login() {
-        // Clean output buffer
-        if (ob_get_level()) {
-            ob_clean();
-        }
-        
-        $this->output
-            ->set_status_header(200)
-            ->set_content_type('application/json')
-            ->set_output(json_encode([
-                'success' => true,
-                'message' => 'Login endpoint is working',
-                'timestamp' => date('Y-m-d H:i:s')
-            ]));
-    }
-    
-    public function database() {
-        // Clean output buffer
-        if (ob_get_level()) {
-            ob_clean();
-        }
+        $db_status = 'unknown';
+        $db_error = null;
         
         try {
-            $this->load->database();
-            $query = $this->db->query("SELECT COUNT(*) as count FROM roles");
-            $result = $query->row();
-            
-            $this->output
-                ->set_status_header(200)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'success' => true,
-                    'message' => 'Database connection working',
-                    'roles_count' => $result->count,
-                    'timestamp' => date('Y-m-d H:i:s')
-                ]));
+            // Test database connection
+            if ($this->db->conn_id) {
+                $db_status = 'connected';
+                
+                // Test if we can query the database
+                $result = $this->db->query("SELECT 1 as test");
+                if ($result) {
+                    $db_status = 'working';
+                }
+            } else {
+                $db_status = 'failed';
+                $db_error = 'No connection ID';
+            }
         } catch (Exception $e) {
-            $this->output
-                ->set_status_header(500)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'success' => false,
-                    'message' => 'Database error: ' . $e->getMessage(),
-                    'timestamp' => date('Y-m-d H:i:s')
-                ]));
+            $db_status = 'error';
+            $db_error = $e->getMessage();
         }
+        
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'status' => TRUE,
+                'message' => 'API is working!',
+                'timestamp' => date('Y-m-d H:i:s'),
+                'database_status' => $db_status,
+                'database_error' => $db_error,
+                'post_data' => $this->input->post(),
+                'files_data' => $_FILES
+            ]));
     }
 }

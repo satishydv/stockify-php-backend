@@ -24,7 +24,7 @@ class Stock_model extends CI_Model {
                 'minimumStockLevel' => (int)$stock['minimum_stock_level'],
                 'maximumStockLevel' => (int)$stock['maximum_stock_level'],
                 'status' => $stock['status'],
-                'unitCost' => (float)$stock['unit_cost'],
+                'purchase_price' => (float)$stock['purchase_price'],
                 'supplier' => $stock['supplier'],
                 'lastUpdated' => $stock['last_updated'],
                 'createdAt' => $stock['created_at']
@@ -47,7 +47,7 @@ class Stock_model extends CI_Model {
                 'minimumStockLevel' => (int)$stock['minimum_stock_level'],
                 'maximumStockLevel' => (int)$stock['maximum_stock_level'],
                 'status' => $stock['status'],
-                'unitCost' => (float)$stock['unit_cost'],
+                'purchase_price' => (float)$stock['purchase_price'],
                 'supplier' => $stock['supplier'],
                 'lastUpdated' => $stock['last_updated'],
                 'createdAt' => $stock['created_at']
@@ -72,7 +72,7 @@ class Stock_model extends CI_Model {
             'minimum_stock_level' => $data['minimum_stock_level'],
             'maximum_stock_level' => $data['maximum_stock_level'],
             'status' => $data['status'],
-            'unit_cost' => $data['unit_cost'],
+            'purchase_price' => $data['purchase_price'],
             'supplier' => $data['supplier'],
             'created_at' => date('Y-m-d H:i:s')
         ];

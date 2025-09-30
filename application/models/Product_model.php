@@ -19,7 +19,8 @@ class Product_model extends CI_Model {
                 'id' => $product['id'],
                 'name' => $product['name'],
                 'sku' => $product['sku'],
-                'price' => (float)$product['price'],
+                'purchase_price' => (float)$product['purchase_price'],
+                'sell_price' => (float)$product['sell_price'],
                 'category' => $product['category'],
                 'status' => $product['status'],
                 'quantityInStock' => (int)$product['quantity_in_stock'],
@@ -27,6 +28,7 @@ class Product_model extends CI_Model {
                 'minimumStockLevel' => 10, // Default value since column doesn't exist
                 'maximumStockLevel' => 1000, // Default value since column doesn't exist
                 'lastUpdated' => $product['updated_at'],
+                'createdAt' => $product['created_at'],
                 'icon' => '📦' // Default icon since column doesn't exist
             ];
         }, $products);
@@ -42,7 +44,8 @@ class Product_model extends CI_Model {
                 'id' => $product['id'],
                 'name' => $product['name'],
                 'sku' => $product['sku'],
-                'price' => (float)$product['price'],
+                'purchase_price' => (float)$product['purchase_price'],
+                'sell_price' => (float)$product['sell_price'],
                 'category' => $product['category'],
                 'status' => $product['status'],
                 'quantityInStock' => (int)$product['quantity_in_stock'],
@@ -50,6 +53,7 @@ class Product_model extends CI_Model {
                 'minimumStockLevel' => 10, // Default value since column doesn't exist
                 'maximumStockLevel' => 1000, // Default value since column doesn't exist
                 'lastUpdated' => $product['updated_at'],
+                'createdAt' => $product['created_at'],
                 'icon' => '📦' // Default icon since column doesn't exist
             ];
         }
@@ -67,7 +71,8 @@ class Product_model extends CI_Model {
         $product_data = [
             'name' => $data['name'],
             'sku' => $data['sku'],
-            'price' => $data['price'],
+            'purchase_price' => $data['purchase_price'],
+            'sell_price' => $data['sell_price'],
             'category' => $data['category'],
             'supplier' => $data['supplier'],
             'status' => $data['status'],
@@ -90,8 +95,11 @@ class Product_model extends CI_Model {
         if (isset($data['sku'])) {
             $update_data['sku'] = $data['sku'];
         }
-        if (isset($data['price'])) {
-            $update_data['price'] = $data['price'];
+        if (isset($data['purchase_price'])) {
+            $update_data['purchase_price'] = $data['purchase_price'];
+        }
+        if (isset($data['sell_price'])) {
+            $update_data['sell_price'] = $data['sell_price'];
         }
         if (isset($data['category'])) {
             $update_data['category'] = $data['category'];

@@ -14,8 +14,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { IoCheckmark, IoClose as IoCloseIcon, IoTime, IoAlert } from "react-icons/io5"
 import { useStockStore } from "@/stores/stockStore"
+import { useCategoryStore } from "@/stores/categoryStore"
+import { useSupplierStore } from "@/stores/supplierStore"
 import { Stock } from "@/lib/stock-data"
 
 interface StockFormData {
@@ -25,31 +26,10 @@ interface StockFormData {
   quantityAvailable: string
   minimumStockLevel: string
   maximumStockLevel: string
-  status: "active" | "high" | "low" | "out_of_stock"
-  unitCost: string
+  status: "draft" | "published" | "inactive" | "active"
+  purchase_price: string
   supplier: string
 }
-
-const categories = [
-  "Electronics",
-  "Furniture", 
-  "Clothing",
-  "Books",
-  "Toys",
-  "Beauty",
-  "Sports",
-  "Home Decor",
-  "Home Appliances",
-  "Others"
-]
-
-const suppliers = [
-  "TechWorld",
-  "ToolSupplier Inc.",
-  "HomeGoods Co.",
-  "ElectroMax",
-  "BuildCorp"
-]
 
 interface EditStockDialogProps {
   stock: Stock | null
@@ -61,16 +41,24 @@ export default function EditStockDialog({ stock, isOpen, onClose }: EditStockDia
   const [formData, setFormData] = useState<StockFormData>({
     sku: "",
     productName: "",
-    category: "Electronics",
+    category: "",
     quantityAvailable: "",
     minimumStockLevel: "10",
     maximumStockLevel: "1000",
-    status: "active",
-    unitCost: "",
+    status: "draft",
+    purchase_price: "",
     supplier: ""
   })
   const [errors, setErrors] = useState<Partial<StockFormData>>({})
   const updateStock = useStockStore((state) => state.updateStock)
+  const { categories, fetchCategories } = useCategoryStore()
+  const { suppliers, fetchSuppliers } = useSupplierStore()
+
+  // Fetch categories and suppliers when component mounts
+  useEffect(() => {
+    fetchCategories()
+    fetchSuppliers()
+  }, [fetchCategories, fetchSuppliers])
 
   // Populate form when stock changes
   useEffect(() => {
@@ -83,7 +71,7 @@ export default function EditStockDialog({ stock, isOpen, onClose }: EditStockDia
         minimumStockLevel: stock.minimumStockLevel.toString(),
         maximumStockLevel: stock.maximumStockLevel.toString(),
         status: stock.status,
-        unitCost: stock.unitCost.toString(),
+        purchase_price: stock.purchase_price.toString(),
         supplier: stock.supplier
       })
       setErrors({})
@@ -103,10 +91,11 @@ export default function EditStockDialog({ stock, isOpen, onClose }: EditStockDia
     
     if (!formData.sku.trim()) newErrors.sku = "SKU is required"
     if (!formData.productName.trim()) newErrors.productName = "Product name is required"
+    if (!formData.category.trim()) newErrors.category = "Category is required"
     if (!formData.quantityAvailable.trim()) newErrors.quantityAvailable = "Quantity available is required"
     if (!formData.minimumStockLevel.trim()) newErrors.minimumStockLevel = "Minimum stock level is required"
     if (!formData.maximumStockLevel.trim()) newErrors.maximumStockLevel = "Maximum stock level is required"
-    if (!formData.unitCost.trim()) newErrors.unitCost = "Unit cost is required"
+    if (!formData.purchase_price.trim()) newErrors.purchase_price = "Purchase price is required"
     if (!formData.supplier.trim()) newErrors.supplier = "Supplier is required"
     
     // Validate numeric fields
@@ -119,8 +108,8 @@ export default function EditStockDialog({ stock, isOpen, onClose }: EditStockDia
     if (formData.maximumStockLevel.trim() && (isNaN(parseInt(formData.maximumStockLevel)) || parseInt(formData.maximumStockLevel) < 0)) {
       newErrors.maximumStockLevel = "Maximum stock level must be a non-negative number"
     }
-    if (formData.unitCost.trim() && (isNaN(parseFloat(formData.unitCost)) || parseFloat(formData.unitCost) < 0)) {
-      newErrors.unitCost = "Unit cost must be a non-negative number"
+    if (formData.purchase_price.trim() && (isNaN(parseFloat(formData.purchase_price)) || parseFloat(formData.purchase_price) < 0)) {
+      newErrors.purchase_price = "Purchase price must be a non-negative number"
     }
     
     setErrors(newErrors)
@@ -139,7 +128,7 @@ export default function EditStockDialog({ stock, isOpen, onClose }: EditStockDia
           minimumStockLevel: parseInt(formData.minimumStockLevel),
           maximumStockLevel: parseInt(formData.maximumStockLevel),
           status: formData.status,
-          unitCost: parseFloat(formData.unitCost),
+          purchase_price: parseFloat(formData.purchase_price),
           supplier: formData.supplier
         })
         
@@ -150,18 +139,6 @@ export default function EditStockDialog({ stock, isOpen, onClose }: EditStockDia
     }
   }
 
-  const getStatusIcon = (status: StockFormData["status"]) => {
-    switch (status) {
-      case "active":
-        return <IoCheckmark className="w-4 h-4" />
-      case "high":
-        return <IoAlert className="w-4 h-4" />
-      case "low":
-        return <IoTime className="w-4 h-4" />
-      case "out_of_stock":
-        return <IoCloseIcon className="w-4 h-4" />
-    }
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -220,14 +197,23 @@ export default function EditStockDialog({ stock, isOpen, onClose }: EditStockDia
                 id="category"
                 value={formData.category}
                 onChange={(e) => handleInputChange("category", e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.category ? "border-red-500" : ""}`}
               >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
+                <option value="">Select a category</option>
+                {categories
+                  .filter(category => category.status === 'active')
+                  .map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
               </select>
+              {errors.category && (
+                <div className="flex items-center gap-1 text-red-500 text-sm">
+                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
+                  {errors.category}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
@@ -236,14 +222,16 @@ export default function EditStockDialog({ stock, isOpen, onClose }: EditStockDia
                 id="supplier"
                 value={formData.supplier}
                 onChange={(e) => handleInputChange("supplier", e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.supplier ? "border-red-500" : ""}`}
               >
                 <option value="">Select a supplier</option>
-                {suppliers.map((supplier) => (
-                  <option key={supplier} value={supplier}>
-                    {supplier}
-                  </option>
-                ))}
+                {suppliers
+                  .filter(supplier => supplier.status === 'active')
+                  .map((supplier) => (
+                    <option key={supplier.id} value={supplier.name}>
+                      {supplier.name}
+                    </option>
+                  ))}
               </select>
               {errors.supplier && (
                 <div className="flex items-center gap-1 text-red-500 text-sm">
@@ -276,21 +264,21 @@ export default function EditStockDialog({ stock, isOpen, onClose }: EditStockDia
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="unit-cost">Unit Cost</Label>
+              <Label htmlFor="purchase-price">Purchase Price</Label>
               <Input
-                id="unit-cost"
+                id="purchase-price"
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="0.00"
-                value={formData.unitCost}
-                onChange={(e) => handleInputChange("unitCost", e.target.value)}
-                className={errors.unitCost ? "border-red-500" : ""}
+                value={formData.purchase_price}
+                onChange={(e) => handleInputChange("purchase_price", e.target.value)}
+                className={errors.purchase_price ? "border-red-500" : ""}
               />
-              {errors.unitCost && (
+              {errors.purchase_price && (
                 <div className="flex items-center gap-1 text-red-500 text-sm">
                   <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                  {errors.unitCost}
+                  {errors.purchase_price}
                 </div>
               )}
             </div>
@@ -337,21 +325,18 @@ export default function EditStockDialog({ stock, isOpen, onClose }: EditStockDia
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label>Status</Label>
-              <div className="flex gap-2 flex-wrap">
-                {(["active", "high", "low", "out_of_stock"] as const).map((status) => (
-                  <Button
-                    key={status}
-                    variant={formData.status === status ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleInputChange("status", status)}
-                    className="flex items-center gap-1"
-                  >
-                    {getStatusIcon(status)}
-                    {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-                  </Button>
-                ))}
-              </div>
+              <Label htmlFor="edit-status">Status</Label>
+              <select
+                id="edit-status"
+                value={formData.status}
+                onChange={(e) => handleInputChange("status", e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="inactive">Inactive</option>
+                <option value="active">Active</option>
+              </select>
             </div>
           </div>
         </div>

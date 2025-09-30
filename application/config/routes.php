@@ -73,10 +73,11 @@ $route['api/products'] = 'api/products/index';
 $route['api/products/(:num)'] = 'api/products/show/$1';
 
 $route['api/orders'] = 'api/orders/index';
-$route['api/orders/(:num)'] = 'api/orders/show/$1';
-$route['api/orders/create'] = 'api/orders/create';
-$route['api/orders/update/(:num)'] = 'api/orders/update/$1';
-$route['api/orders/delete/(:num)'] = 'api/orders/delete/$1';
+$route['api/orders/simple-test'] = 'api/orders/simple_test';
+$route['api/orders/test-update/(:any)'] = 'api/orders/test_update/$1';
+$route['api/orders/update/(:any)'] = 'api/orders/update_order/$1';
+$route['api/orders/delete/(:any)'] = 'api/orders/delete_order/$1';
+$route['api/orders/(:any)'] = 'api/orders/get_order/$1';
 
 $route['api/stock'] = 'api/stock/index';
 $route['api/stock/(:num)'] = 'api/stock/show/$1';

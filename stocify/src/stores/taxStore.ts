@@ -22,7 +22,7 @@ interface TaxStore {
   bulkUpdateStatus: (status: 'enable' | 'disable') => Promise<boolean>
 }
 
-const API_BASE_URL = 'http://localhost/inventory/index.php/api/taxes'
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/index.php/api/taxes`
 
 export const useTaxStore = create<TaxStore>((set, get) => ({
   taxes: [],

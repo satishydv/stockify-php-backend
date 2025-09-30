@@ -152,7 +152,7 @@ export default function CreateOrderPage() {
   const testApiConnection = async () => {
     try {
       console.log('Testing API connection...')
-      const response = await fetch('http://localhost/inventory/index.php/api/test', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index.php/api/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -239,10 +239,10 @@ export default function CreateOrderPage() {
       }))))
 
       // Make API call to your backend
-      console.log('Sending request to:', 'http://localhost/inventory/index.php/api/orders')
+      console.log('Sending request to:', `${process.env.NEXT_PUBLIC_API_URL}/index.php/api/orders`)
       console.log('FormData contents:', Array.from(formData.entries()))
       
-      const response = await fetch('http://localhost/inventory/index.php/api/orders', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index.php/api/orders`, {
         method: 'POST',
         body: formData, // FormData automatically sets Content-Type: multipart/form-data
       })

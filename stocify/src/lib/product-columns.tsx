@@ -38,8 +38,15 @@ export const useProductColumns = () => {
   }
 
   const handleEdit = (product: Product) => {
-    setEditingProduct(product)
-    setIsEditDialogOpen(true)
+    console.log('Editing product:', product)
+    // Ensure we have a valid product object
+    if (product && typeof product === 'object' && 'id' in product && 'name' in product && 'sku' in product) {
+      setEditingProduct(product)
+      setIsEditDialogOpen(true)
+    } else {
+      console.error('Invalid product object:', product)
+      toast.error('Invalid product data')
+    }
   }
 
   const handleCloseEditDialog = () => {
@@ -71,13 +78,6 @@ export const useProductColumns = () => {
           <span className="font-medium">{product.name}</span>
         </div>
       )
-    },
-  },
-  {
-    accessorKey: "sku",
-    header: "Sku",
-    cell: ({ row }) => {
-      return <span className="text-muted-foreground">{row.getValue("sku")}</span>
     },
   },
   {
@@ -134,6 +134,19 @@ export const useProductColumns = () => {
     },
   },
   {
+    accessorKey: "branch_name",
+    header: "Branch",
+    cell: ({ row }) => {
+      const branchName = row.getValue("branch_name") as string
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🏢</span>
+          <span className="text-muted-foreground">{branchName || "No Branch"}</span>
+        </div>
+      )
+    },
+  },
+  {
     accessorKey: "createdAt",
     header: "Created At",
     cell: ({ row }) => {
@@ -187,12 +200,12 @@ export const useProductColumns = () => {
 
   return {
     columns,
-    editDialog: (
+    editDialog: editingProduct && isEditDialogOpen ? (
       <EditProductDialog
         product={editingProduct}
         isOpen={isEditDialogOpen}
         onClose={handleCloseEditDialog}
       />
-    )
+    ) : null
   }
 }

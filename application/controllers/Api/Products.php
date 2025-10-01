@@ -111,6 +111,7 @@ class Products extends CI_Controller {
             'supplier' => $input['supplier'],
             'status' => isset($input['status']) ? $input['status'] : 'draft',
             'quantityInStock' => $input['quantityInStock'],
+            'branch_name' => isset($input['branch_name']) ? $input['branch_name'] : null,
             'minimumStockLevel' => isset($input['minimumStockLevel']) ? $input['minimumStockLevel'] : 10,
             'maximumStockLevel' => isset($input['maximumStockLevel']) ? $input['maximumStockLevel'] : 1000
         ];

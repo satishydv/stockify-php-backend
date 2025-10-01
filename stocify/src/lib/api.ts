@@ -260,6 +260,31 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Branch management endpoints
+  async getBranches() {
+    return this.request('/api/branches');
+  }
+
+  async createBranch(branchData: any) {
+    return this.request('/api/branches/create', {
+      method: 'POST',
+      body: JSON.stringify(branchData),
+    });
+  }
+
+  async updateBranch(id: number, branchData: any) {
+    return this.request(`/api/branches/update/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(branchData),
+    });
+  }
+
+  async deleteBranch(id: number) {
+    return this.request(`/api/branches/delete/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // Create a singleton instance

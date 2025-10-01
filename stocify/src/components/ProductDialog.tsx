@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator"
 import { useProductStore } from "@/stores/productStore"
 import { useCategoryStore } from "@/stores/categoryStore"
 import { useSupplierStore } from "@/stores/supplierStore"
+import { useBranchStore } from "@/stores/branchStore"
 
 interface ProductFormData {
   name: string
@@ -28,6 +29,7 @@ interface ProductFormData {
   status: string
   quantity: string
   supplier: string
+  branch_name: string
 }
 
 const initialFormData: ProductFormData = {
@@ -38,7 +40,8 @@ const initialFormData: ProductFormData = {
   category: "",
   status: "published",
   quantity: "",
-  supplier: ""
+  supplier: "",
+  branch_name: ""
 }
 
 export default function ProductDialog() {
@@ -48,12 +51,14 @@ export default function ProductDialog() {
   const addProduct = useProductStore((state) => state.addProduct)
   const { categories, fetchCategories } = useCategoryStore()
   const { suppliers, fetchSuppliers } = useSupplierStore()
+  const { branches, fetchBranches } = useBranchStore()
 
-  // Fetch categories and suppliers when component mounts
+  // Fetch categories, suppliers, and branches when component mounts
   useEffect(() => {
     fetchCategories()
     fetchSuppliers()
-  }, [fetchCategories, fetchSuppliers])
+    fetchBranches()
+  }, [fetchCategories, fetchSuppliers, fetchBranches])
 
   const handleInputChange = (field: keyof ProductFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -91,6 +96,7 @@ export default function ProductDialog() {
           status: formData.status,
           quantityInStock: parseInt(formData.quantity),
           supplier: formData.supplier,
+          branch_name: formData.branch_name || undefined,
           icon: "📦" // Default icon for new products
         })
         
@@ -221,6 +227,28 @@ export default function ProductDialog() {
                   {errors.category}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Branch selection row */}
+          <div className="mt-3">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="branch_name">Branch</Label>
+              <select
+                id="branch_name"
+                value={formData.branch_name}
+                onChange={(e) => handleInputChange("branch_name", e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select a branch (optional)...</option>
+                {branches
+                  .filter(branch => branch.status === 'active')
+                  .map((branch) => (
+                    <option key={branch.id} value={branch.name}>
+                      {branch.name}
+                    </option>
+                  ))}
+              </select>
             </div>
           </div>
 

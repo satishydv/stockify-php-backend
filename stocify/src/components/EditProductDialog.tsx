@@ -14,6 +14,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useProductStore } from "@/stores/productStore"
+import { useCategoryStore } from "@/stores/categoryStore"
+import { useSupplierStore } from "@/stores/supplierStore"
+import { useBranchStore } from "@/stores/branchStore"
 import { Product } from "@/lib/product-data"
 import { toast } from "sonner"
 
@@ -26,6 +29,7 @@ interface EditProductFormData {
   status: string
   quantity: string
   supplier: string
+  branch_name: string
 }
 
 interface EditProductDialogProps {
@@ -56,11 +60,22 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
     category: "Electronics",
     status: "published",
     quantity: "",
-    supplier: ""
+    supplier: "",
+    branch_name: ""
   })
   const [errors, setErrors] = useState<Partial<EditProductFormData>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { updateProduct, fetchProducts } = useProductStore()
+  const { categories, fetchCategories } = useCategoryStore()
+  const { suppliers, fetchSuppliers } = useSupplierStore()
+  const { branches, fetchBranches } = useBranchStore()
+
+  // Fetch data when component mounts
+  useEffect(() => {
+    fetchCategories()
+    fetchSuppliers()
+    fetchBranches()
+  }, [fetchCategories, fetchSuppliers, fetchBranches])
 
   // Populate form when product changes
   useEffect(() => {
@@ -73,7 +88,8 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
         category: product.category || "Electronics",
         status: product.status || "published",
         quantity: product.quantityInStock?.toString() || "",
-        supplier: product.supplier || ""
+        supplier: product.supplier || "",
+        branch_name: product.branch_name || ""
       })
       setErrors({})
     }
@@ -115,6 +131,7 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
         status: formData.status,
         quantityInStock: parseInt(formData.quantity),
         supplier: formData.supplier,
+        branch_name: formData.branch_name || undefined,
         icon: product.icon // Keep existing icon
       })
       
@@ -194,8 +211,8 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                  <option key={category.id} value={category.name}>
+                    {category.name}
                   </option>
                 ))}
               </select>
@@ -217,6 +234,26 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Branch selection row */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="edit-branch_name">Branch</Label>
+            <select
+              id="edit-branch_name"
+              value={formData.branch_name}
+              onChange={(e) => handleInputChange("branch_name", e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">Select a branch (optional)...</option>
+              {branches
+                .filter(branch => branch.status === 'active')
+                .map((branch) => (
+                  <option key={branch.id} value={branch.name}>
+                    {branch.name}
+                  </option>
+                ))}
+            </select>
           </div>
 
           {/* Third row: Status */}

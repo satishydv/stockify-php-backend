@@ -109,3 +109,9 @@ $route['api/taxes/create'] = 'api/taxes/create';
 $route['api/taxes/update/(:num)'] = 'api/taxes/update/$1';
 $route['api/taxes/delete/(:num)'] = 'api/taxes/delete/$1';
 $route['api/taxes/bulk-update-status'] = 'api/taxes/bulk_update_status';
+
+$route['api/branches'] = 'api/branches/index';
+$route['api/branches/(:num)'] = 'api/branches/show/$1';
+$route['api/branches/create'] = 'api/branches/create';
+$route['api/branches/update/(:num)'] = 'api/branches/update/$1';
+$route['api/branches/delete/(:num)'] = 'api/branches/delete/$1';

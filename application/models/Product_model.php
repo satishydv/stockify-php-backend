@@ -25,6 +25,7 @@ class Product_model extends CI_Model {
                 'status' => $product['status'],
                 'quantityInStock' => (int)$product['quantity_in_stock'],
                 'supplier' => $product['supplier'],
+                'branch_name' => $product['branch_name'],
                 'minimumStockLevel' => 10, // Default value since column doesn't exist
                 'maximumStockLevel' => 1000, // Default value since column doesn't exist
                 'lastUpdated' => $product['updated_at'],
@@ -50,6 +51,7 @@ class Product_model extends CI_Model {
                 'status' => $product['status'],
                 'quantityInStock' => (int)$product['quantity_in_stock'],
                 'supplier' => $product['supplier'],
+                'branch_name' => $product['branch_name'],
                 'minimumStockLevel' => 10, // Default value since column doesn't exist
                 'maximumStockLevel' => 1000, // Default value since column doesn't exist
                 'lastUpdated' => $product['updated_at'],
@@ -77,6 +79,7 @@ class Product_model extends CI_Model {
             'supplier' => $data['supplier'],
             'status' => $data['status'],
             'quantity_in_stock' => $data['quantityInStock'],
+            'branch_name' => isset($data['branch_name']) ? $data['branch_name'] : null,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
         ];
@@ -112,6 +115,9 @@ class Product_model extends CI_Model {
         }
         if (isset($data['quantityInStock'])) {
             $update_data['quantity_in_stock'] = $data['quantityInStock'];
+        }
+        if (isset($data['branch_name'])) {
+            $update_data['branch_name'] = $data['branch_name'];
         }
         
         $update_data['updated_at'] = date('Y-m-d H:i:s');

@@ -148,32 +148,6 @@ export default function CreateOrderPage() {
     handlePaymentFormChange('paymentAttachment', file)
   }
 
-  // Test API connection
-  const testApiConnection = async () => {
-    try {
-      console.log('Testing API connection...')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index.php/api/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ test: 'data' })
-      })
-      
-      console.log('Test response status:', response.status)
-      const result = await response.text()
-      console.log('Test response body:', result)
-      
-      if (response.ok) {
-        alert('API connection successful!')
-      } else {
-        alert('API connection failed: ' + result)
-      }
-    } catch (error) {
-      console.error('API test error:', error)
-      alert('API test failed: ' + error)
-    }
-  }
 
   // Open payment dialog
   const handleCreateOrder = () => {
@@ -303,18 +277,9 @@ export default function CreateOrderPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Create New Order</h1>
-            <p className="text-gray-600 mt-2">Select products and create a new order</p>
-          </div>
-          <Button 
-            onClick={testApiConnection}
-            variant="outline"
-            className="bg-blue-50 text-blue-700 hover:bg-blue-100"
-          >
-            Test API Connection
-          </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Create New Order</h1>
+          <p className="text-gray-600 mt-2">Select products and create a new order</p>
         </div>
       </div>
 

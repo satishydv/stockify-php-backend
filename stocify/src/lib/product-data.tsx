@@ -14,6 +14,7 @@ export type Product = {
   status: "published" | "inactive" | "draft"
   quantityInStock: number
   supplier: string
+  branch_name?: string
   icon: string
   createdAt?: string
 }

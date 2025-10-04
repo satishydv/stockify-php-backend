@@ -278,7 +278,7 @@ export default function CreateOrderPage() {
     <div className="container mx-auto p-6">
       <div className="mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Order</h1>
+          <h1 className="text-3xl font-bold text-orange-500">Create New Order</h1>
           <p className="text-gray-600 mt-2">Select products and create a new order</p>
         </div>
       </div>
@@ -311,7 +311,7 @@ export default function CreateOrderPage() {
                     <div className="flex items-center gap-3">
                       <div className="text-2xl">{product.icon}</div>
                       <div>
-                        <h3 className="font-medium text-gray-900">{product.name}</h3>
+                        <h3 className="font-medium text-orange-500">{product.name}</h3>
                         <p className="text-sm text-gray-500">SKU: {product.sku}</p>
                         <p className="text-sm text-gray-500">Stock: {product.quantityInStock}</p>
                       </div>

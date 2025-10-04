@@ -92,21 +92,21 @@ class ApiClient {
   }
 
   async createUser(userData: any) {
-    return this.request('/api/users', {
+    return this.request('/api/users/create', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
   async updateUser(id: string, userData: any) {
-    return this.request(`/api/users/${id}`, {
+    return this.request(`/api/users/update/${id}`, {
       method: 'PUT',
       body: JSON.stringify(userData),
     });
   }
 
   async deleteUser(id: string) {
-    return this.request(`/api/users/${id}`, {
+    return this.request(`/api/users/delete/${id}`, {
       method: 'DELETE',
     });
   }
@@ -167,21 +167,21 @@ class ApiClient {
   }
 
   async createStock(stockData: any) {
-    return this.request('/api/stock', {
+    return this.request('/api/stock/create', {
       method: 'POST',
       body: JSON.stringify(stockData),
     });
   }
 
   async updateStock(id: number, stockData: any) {
-    return this.request(`/api/stock/${id}`, {
+    return this.request(`/api/stock/update/${id}`, {
       method: 'PUT',
       body: JSON.stringify(stockData),
     });
   }
 
   async deleteStock(id: number) {
-    return this.request(`/api/stock/${id}`, {
+    return this.request(`/api/stock/delete/${id}`, {
       method: 'DELETE',
     });
   }
@@ -192,21 +192,21 @@ class ApiClient {
   }
 
   async createCategory(categoryData: any) {
-    return this.request('/api/categories', {
+    return this.request('/api/categories/create', {
       method: 'POST',
       body: JSON.stringify(categoryData),
     });
   }
 
   async updateCategory(id: string, categoryData: any) {
-    return this.request(`/api/categories/${id}`, {
+    return this.request(`/api/categories/update/${id}`, {
       method: 'PUT',
       body: JSON.stringify(categoryData),
     });
   }
 
   async deleteCategory(id: string) {
-    return this.request(`/api/categories/${id}`, {
+    return this.request(`/api/categories/delete/${id}`, {
       method: 'DELETE',
     });
   }
@@ -217,21 +217,21 @@ class ApiClient {
   }
 
   async createSupplier(supplierData: any) {
-    return this.request('/api/suppliers', {
+    return this.request('/api/suppliers/create', {
       method: 'POST',
       body: JSON.stringify(supplierData),
     });
   }
 
   async updateSupplier(id: string, supplierData: any) {
-    return this.request(`/api/suppliers/${id}`, {
+    return this.request(`/api/suppliers/update/${id}`, {
       method: 'PUT',
       body: JSON.stringify(supplierData),
     });
   }
 
   async deleteSupplier(id: string) {
-    return this.request(`/api/suppliers/${id}`, {
+    return this.request(`/api/suppliers/delete/${id}`, {
       method: 'DELETE',
     });
   }
@@ -242,21 +242,21 @@ class ApiClient {
   }
 
   async createRole(roleData: any) {
-    return this.request('/api/roles', {
+    return this.request('/api/roles/create', {
       method: 'POST',
       body: JSON.stringify(roleData),
     });
   }
 
   async updateRole(id: string, roleData: any) {
-    return this.request(`/api/roles/${id}`, {
+    return this.request(`/api/roles/update/${id}`, {
       method: 'PUT',
       body: JSON.stringify(roleData),
     });
   }
 
   async deleteRole(id: string) {
-    return this.request(`/api/roles/${id}`, {
+    return this.request(`/api/roles/delete/${id}`, {
       method: 'DELETE',
     });
   }

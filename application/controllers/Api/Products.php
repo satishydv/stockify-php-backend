@@ -109,7 +109,7 @@ class Products extends CI_Controller {
             'sell_price' => $input['sell_price'],
             'category' => $input['category'],
             'supplier' => $input['supplier'],
-            'status' => isset($input['status']) ? $input['status'] : 'draft',
+            'status' => isset($input['status']) ? $input['status'] : 'active',
             'quantityInStock' => $input['quantityInStock'],
             'branch_name' => isset($input['branch_name']) ? $input['branch_name'] : null,
             'minimumStockLevel' => isset($input['minimumStockLevel']) ? $input['minimumStockLevel'] : 10,
@@ -127,7 +127,7 @@ class Products extends CI_Controller {
                 'quantity_available' => $input['quantityInStock'],
                 'minimum_stock_level' => 10, // Default value
                 'maximum_stock_level' => 1000, // Default value
-                'status' => isset($input['status']) ? $input['status'] : 'draft',
+                'status' => isset($input['status']) ? $input['status'] : 'active',
                 'purchase_price' => $input['purchase_price'],
                 'supplier' => $input['supplier']
             ];

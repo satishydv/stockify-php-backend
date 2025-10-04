@@ -70,7 +70,8 @@ class Roles extends CI_Controller {
         // Prepare role data
         $role_data = [
             'name' => $input['name'],
-            'permissions' => isset($input['permissions']) ? json_encode($input['permissions']) : null
+            'description' => $input['description'] ?? null,
+            'permissions' => $input['permissions'] ?? []
         ];
         
         $role_id = $this->Role_model->create_role($role_data);
@@ -127,8 +128,12 @@ class Roles extends CI_Controller {
             $update_data['name'] = $input['name'];
         }
         
+        if (isset($input['description'])) {
+            $update_data['description'] = $input['description'];
+        }
+        
         if (isset($input['permissions'])) {
-            $update_data['permissions'] = json_encode($input['permissions']);
+            $update_data['permissions'] = $input['permissions'];
         }
         
         if (empty($update_data)) {
@@ -141,7 +146,6 @@ class Roles extends CI_Controller {
             return;
         }
         
-        $update_data['updated_at'] = date('Y-m-d H:i:s');
         
         if ($this->Role_model->update_role($id, $update_data)) {
             $updated_role = $this->Role_model->get_role_by_id($id);

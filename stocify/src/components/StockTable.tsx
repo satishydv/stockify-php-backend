@@ -82,7 +82,17 @@ export function StockTable({ onEditStock }: StockTableProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <div className="flex items-center gap-4">
-            {/* You can add status and category dropdowns here similar to products */}
+            {/* Color Legend */}
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1">
+                <span className="font-medium px-1.5 py-0.5 rounded bg-red-100 text-red-700">0</span>
+                <span className="text-gray-500">Low stock</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">0</span>
+                <span className="text-gray-500">Healthy stock</span>
+              </div>
+            </div>
           </div>
         </div>
         {/* filter area */}

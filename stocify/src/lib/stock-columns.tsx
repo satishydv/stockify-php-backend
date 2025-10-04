@@ -42,7 +42,20 @@ export const useStockColumns = (onEditStock?: (stock: Stock) => void): ColumnDef
       header: "Quantity Available",
       cell: ({ row }) => {
         const quantity = row.getValue("quantityAvailable") as number
-        return <span className="font-medium">{quantity}</span>
+        const minimumLevel = row.getValue("minimumStockLevel") as number
+        const isBelowMinLevel = quantity < minimumLevel
+        
+        return (
+          <span 
+            className={`font-medium px-2 py-1 rounded-md ${
+              isBelowMinLevel 
+                ? 'bg-red-100 text-red-700' 
+                : 'bg-blue-100 text-blue-700'
+            }`}
+          >
+            {quantity}
+          </span>
+        )
       },
     },
     {

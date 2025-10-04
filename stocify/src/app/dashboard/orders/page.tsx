@@ -279,7 +279,7 @@ const page = () => {
     <div className="container mx-auto p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
+        <h1 className="text-3xl font-bold text-orange-500">Orders</h1>
         <p className="text-gray-600 mt-2">{orders.length} total orders</p>
       </div>
 
@@ -343,16 +343,16 @@ const page = () => {
             <Card key={order.id} className="overflow-hidden">
               <CardContent className="p-0">
                 {/* Order Header */}
-                <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b">
+                <div className="flex items-center justify-between px-4 py-2 bg-blue-50 dark:bg-gray-800 border-b">
                   <div className="flex items-center gap-3">
                     <input type="checkbox" className="rounded" />
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
                         <User className="h-3 w-3 text-gray-500" />
-                        <span className="text-sm font-medium">Customer: {order.customer_name}</span>
+                        <span className="text-sm font-medium text-orange-500">Customer: {order.customer_name}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <Calendar className="h-3 w-3" />
+                        <Calendar className="h-3 w-3 text-blue-500" />
                         <span>Date of Order: {new Date(order.order_date).toLocaleDateString('en-GB', { 
                           day: '2-digit', 
                           month: 'short', 
@@ -371,11 +371,11 @@ const page = () => {
                   <div className="flex items-center gap-6">
                     {/* Product Section */}
                     <div className="flex items-center gap-3 flex-1">
-                      <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                        <Package className="h-5 w-5 text-gray-500" />
+                      <div className="w-10 h-10 bg-blue-200 rounded flex items-center justify-center">
+                        <Package className="h-5 w-5 text-blue-500" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{order.items[0]?.product_name}</p>
+                        <p className="font-medium text-sm text-orange-500">{order.items[0]?.product_name}</p>
                         <p className="text-xs text-gray-500">
                           SKU: {order.items[0]?.product_sku} | Qty: {order.items[0]?.quantity}
                         </p>
@@ -418,7 +418,7 @@ const page = () => {
 
                     {/* Action Section */}
                     <div className="flex flex-col gap-2 min-w-[120px]">
-                      <Button size="sm" variant="outline" className="flex items-center gap-1 text-xs h-7">
+                      <Button size="sm" variant="outline" className="flex items-center gap-1 text-xs h-7 bg-blue-500 text-white">
                         <Printer className="h-3 w-3" />
                         Print Label
                       </Button>

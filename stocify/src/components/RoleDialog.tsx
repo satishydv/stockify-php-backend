@@ -56,7 +56,7 @@ export default function RoleDialog() {
   const [errors, setErrors] = useState<Partial<RoleFormData>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-  const addRole = useRoleStore((state) => state.addRole)
+  const { addRole, fetchRoles } = useRoleStore()
 
   const handleInputChange = (field: keyof RoleFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -125,12 +125,8 @@ export default function RoleDialog() {
         permissions: formData.permissions
       })
 
-      // Add role to store
-      addRole({
-        name: formData.name,
-        type: formData.name, // Use role name as type
-        permissions: formData.permissions
-      })
+      // Refresh roles list from server
+      await fetchRoles()
       
       // Reset form and close dialog
       setFormData(initialFormData)
@@ -151,9 +147,9 @@ export default function RoleDialog() {
       </DialogTrigger>
       <DialogContent className="p-7 px-8 poppins min-w-6xl min-h-[600px]">
         <DialogHeader>
-          <DialogTitle className="text-[22px]">Add Role</DialogTitle>
+          <DialogTitle className="text-[22px]">Permissions</DialogTitle>
           <DialogDescription>
-            Fill in the form to add a new role with permissions.
+            Configure role permissions for different modules.
           </DialogDescription>
         </DialogHeader>
         <Separator />
@@ -192,58 +188,67 @@ export default function RoleDialog() {
                 </Label>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Set permissions for each module (C=Create, R=Read, U=Update, D=Delete)
-            </p>
             
-            <div className="grid grid-cols-3 gap-4">
-              {moduleNames.map((module) => (
-                <div key={module} className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-3 capitalize">{module}</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`${module}-create`}
-                        checked={formData.permissions[module].create}
-                        onCheckedChange={(checked) => 
-                          handlePermissionChange(module, 'create', checked as boolean)
-                        }
-                      />
-                      <Label htmlFor={`${module}-create`} className="text-sm">Create</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`${module}-read`}
-                        checked={formData.permissions[module].read}
-                        onCheckedChange={(checked) => 
-                          handlePermissionChange(module, 'read', checked as boolean)
-                        }
-                      />
-                      <Label htmlFor={`${module}-read`} className="text-sm">Read</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`${module}-update`}
-                        checked={formData.permissions[module].update}
-                        onCheckedChange={(checked) => 
-                          handlePermissionChange(module, 'update', checked as boolean)
-                        }
-                      />
-                      <Label htmlFor={`${module}-update`} className="text-sm">Update</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`${module}-delete`}
-                        checked={formData.permissions[module].delete}
-                        onCheckedChange={(checked) => 
-                          handlePermissionChange(module, 'delete', checked as boolean)
-                        }
-                      />
-                      <Label htmlFor={`${module}-delete`} className="text-sm">Delete</Label>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            {/* Permissions Table */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="max-h-96 overflow-y-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">Permission</th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-700">Create</th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-700">Read</th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-700">Update</th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-700">Delete</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {moduleNames.map((module, index) => (
+                      <tr key={module} className={`border-b border-gray-100 hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
+                        <td className="py-3 px-4 font-medium text-gray-900 capitalize">
+                          {module}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Checkbox
+                            id={`${module}-create`}
+                            checked={formData.permissions[module].create}
+                            onCheckedChange={(checked) => 
+                              handlePermissionChange(module, 'create', checked as boolean)
+                            }
+                          />
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Checkbox
+                            id={`${module}-read`}
+                            checked={formData.permissions[module].read}
+                            onCheckedChange={(checked) => 
+                              handlePermissionChange(module, 'read', checked as boolean)
+                            }
+                          />
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Checkbox
+                            id={`${module}-update`}
+                            checked={formData.permissions[module].update}
+                            onCheckedChange={(checked) => 
+                              handlePermissionChange(module, 'update', checked as boolean)
+                            }
+                          />
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Checkbox
+                            id={`${module}-delete`}
+                            checked={formData.permissions[module].delete}
+                            onCheckedChange={(checked) => 
+                              handlePermissionChange(module, 'delete', checked as boolean)
+                            }
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -257,9 +262,9 @@ export default function RoleDialog() {
           <Button 
             onClick={handleSubmit} 
             disabled={isSubmitting}
-            className="h-11 px-11 bg-red-600 hover:bg-red-700 disabled:opacity-50"
+            className="h-11 px-11 bg-gray-600 hover:bg-gray-700 disabled:opacity-50"
           >
-            {isSubmitting ? 'Creating...' : 'Add Role'}
+            {isSubmitting ? 'Creating...' : 'Create Role'}
           </Button>
         </DialogFooter>
       </DialogContent>

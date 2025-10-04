@@ -74,16 +74,39 @@ class Supplier_model extends CI_Model {
     }
     
     public function create_supplier($data) {
+        // Generate UUID for the supplier ID
+        $supplier_id = $this->generate_uuid();
+        
         $supplier_data = [
+            'id' => $supplier_id,
             'name' => $data['name'],
-            'contact_info' => $data['contact_info'],
-            'status' => $data['status'],
+            'email' => $data['email'] ?? '',
+            'phone' => $data['phone'] ?? '',
+            'street' => $data['street'] ?? '',
+            'city' => $data['city'] ?? '',
+            'state' => $data['state'] ?? '',
+            'zip' => $data['zip'] ?? '',
+            'country' => $data['country'] ?? 'INDIA',
+            'gstin' => $data['gstin'] ?? null,
+            'category' => $data['category'] ?? 'Other',
+            'website' => $data['website'] ?? null,
+            'status' => $data['status'] ?? 'active',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
         ];
         
         $this->db->insert('suppliers', $supplier_data);
-        return $this->db->insert_id();
+        return $supplier_id;
+    }
+    
+    private function generate_uuid() {
+        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
     }
     
     public function update_supplier($id, $data) {

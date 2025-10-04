@@ -15,15 +15,12 @@ class Role_model extends CI_Model {
         
         // Transform the data to match frontend format
         return array_map(function($role) {
-            // Fetch permissions for this role
-            $permissions = $this->get_role_permissions($role['id']);
-            
             return [
                 'id' => $role['id'],
                 'name' => $role['name'],
                 'type' => $role['name'], // Use name as type for badge display
                 'description' => $role['description'] ?? null,
-                'permissions' => $permissions,
+                'permissions' => $this->parse_permissions_from_json($role['permissions']),
                 'createdAt' => $role['created_at'],
                 'updatedAt' => $role['updated_at']
             ];
@@ -36,15 +33,12 @@ class Role_model extends CI_Model {
         $role = $query->row_array();
         
         if ($role) {
-            // Fetch permissions for this role
-            $permissions = $this->get_role_permissions($role['id']);
-            
             return [
                 'id' => $role['id'],
                 'name' => $role['name'],
                 'type' => $role['name'], // Use name as type for badge display
                 'description' => $role['description'] ?? null,
-                'permissions' => $permissions,
+                'permissions' => $this->parse_permissions_from_json($role['permissions']),
                 'createdAt' => $role['created_at'],
                 'updatedAt' => $role['updated_at']
             ];
@@ -63,6 +57,7 @@ class Role_model extends CI_Model {
         $role_data = [
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
+            'permissions' => $this->convert_permissions_to_json($data['permissions'] ?? []),
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
         ];
@@ -72,8 +67,20 @@ class Role_model extends CI_Model {
     }
     
     public function update_role($id, $data) {
+        $role_data = [
+            'name' => $data['name'] ?? null,
+            'description' => $data['description'] ?? null,
+            'permissions' => $this->convert_permissions_to_json($data['permissions'] ?? []),
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+        
+        // Remove null values
+        $role_data = array_filter($role_data, function($value) {
+            return $value !== null;
+        });
+        
         $this->db->where('id', $id);
-        return $this->db->update('roles', $data);
+        return $this->db->update('roles', $role_data);
     }
     
     public function delete_role($id) {
@@ -81,32 +88,68 @@ class Role_model extends CI_Model {
         return $this->db->delete('roles');
     }
     
-    private function get_role_permissions($role_id) {
-        $this->db->where('role_id', $role_id);
-        $query = $this->db->get('role_permissions');
-        $permissions_data = $query->result_array();
+    /**
+     * Convert permissions object to JSON array format
+     * Input: {"users": {"create": true, "read": true, "update": false, "delete": false}}
+     * Output: ["users:create", "users:read"]
+     */
+    private function convert_permissions_to_json($permissions) {
+        if (!is_array($permissions)) {
+            return json_encode([]);
+        }
         
-        // Initialize permissions structure
-        $permissions = [
-            'dashboard' => ['create' => false, 'read' => false, 'update' => false, 'delete' => false],
-            'products' => ['create' => false, 'read' => false, 'update' => false, 'delete' => false],
-            'users' => ['create' => false, 'read' => false, 'update' => false, 'delete' => false],
-            'orders' => ['create' => false, 'read' => false, 'update' => false, 'delete' => false],
-            'stocks' => ['create' => false, 'read' => false, 'update' => false, 'delete' => false],
-            'sales' => ['create' => false, 'read' => false, 'update' => false, 'delete' => false],
-            'reports' => ['create' => false, 'read' => false, 'update' => false, 'delete' => false],
-            'suppliers' => ['create' => false, 'read' => false, 'update' => false, 'delete' => false],
-            'categories' => ['create' => false, 'read' => false, 'update' => false, 'delete' => false]
+        $permission_array = [];
+        
+        foreach ($permissions as $module => $actions) {
+            if (is_array($actions)) {
+                foreach ($actions as $action => $allowed) {
+                    if ($allowed === true) {
+                        $permission_array[] = $module . ':' . $action;
+                    }
+                }
+            }
+        }
+        
+        return json_encode($permission_array);
+    }
+    
+    /**
+     * Parse permissions JSON array back to object format
+     * Input: ["users:create", "users:read"]
+     * Output: {"users": {"create": true, "read": true, "update": false, "delete": false}}
+     */
+    private function parse_permissions_from_json($permissions_json) {
+        // Define all available modules
+        $all_modules = [
+            'dashboard', 'products', 'users', 'orders', 'stocks', 
+            'sales', 'reports', 'suppliers', 'categories'
         ];
         
-        // Map database permissions to frontend structure
-        foreach ($permissions_data as $perm) {
-            $module = $perm['module_name'];
-            if (isset($permissions[$module])) {
-                $permissions[$module]['create'] = (bool)$perm['can_create'];
-                $permissions[$module]['read'] = (bool)$perm['can_read'];
-                $permissions[$module]['update'] = (bool)$perm['can_update'];
-                $permissions[$module]['delete'] = (bool)$perm['can_delete'];
+        // Initialize permissions structure for all modules
+        $permissions = [];
+        foreach ($all_modules as $module) {
+            $permissions[$module] = [
+                'create' => false, 
+                'read' => false, 
+                'update' => false, 
+                'delete' => false
+            ];
+        }
+        
+        // Parse JSON if it exists
+        if (!empty($permissions_json)) {
+            $permission_array = json_decode($permissions_json, true);
+            
+            if (is_array($permission_array)) {
+                foreach ($permission_array as $permission) {
+                    if (strpos($permission, ':') !== false) {
+                        list($module, $action) = explode(':', $permission, 2);
+                        
+                        if (isset($permissions[$module]) && isset($permissions[$module][$action])) {
+                            $permissions[$module][$action] = true;
+                        }
+                    }
+                }
             }
         }
         

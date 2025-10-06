@@ -43,6 +43,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useProductStore } from "@/stores/productStore"
+import { Product } from "@/lib/product-data"
 
 interface OrderItem {
   id: number
@@ -205,6 +207,108 @@ const page = () => {
     }
   }
 
+  const formatCurrency = (value: number | string) => `₹${(parseFloat(String(value)) || 0).toFixed(2)}`
+
+  const handlePrint = (order: Order) => {
+    const orderDate = new Date(order.order_date).toLocaleDateString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    })
+
+    const itemsRows = order.items.map((it, idx) => `
+      <tr>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;">${idx + 1}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;">${it.product_name}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;">${it.product_sku}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${it.quantity}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${formatCurrency(it.unit_price)}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${formatCurrency(it.subtotal)}</td>
+      </tr>
+    `).join('')
+
+    const html = `<!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Order ${order.id} - Print</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; margin: 24px; color: #111827; }
+          .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+          .title { font-size:22px; font-weight:700; color:#111827; }
+          .muted { color:#6b7280; font-size:12px; }
+          .section { border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:12px; }
+          .grid { display:grid; grid-template-columns: 1fr 1fr; gap:8px 16px; }
+          table { width:100%; border-collapse: collapse; margin-top:8px; }
+          th { text-align:left; background:#f9fafb; }
+          th, td { font-size:12px; }
+          .totals { margin-top:12px; width:280px; margin-left:auto; }
+          .totals-row { display:flex; justify-content:space-between; padding:6px 0; font-size:13px; }
+          .bold { font-weight:700; }
+          @media print { .no-print { display:none; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="title">Order ${order.id}</div>
+            <div class="muted">Date: ${orderDate}</div>
+          </div>
+          <div class="muted">Mode of Payment: <span style="text-transform:capitalize; color:#111827;">${order.payment_method}</span></div>
+        </div>
+
+        <div class="section">
+          <div style="font-weight:600; margin-bottom:8px;">Customer Details</div>
+          <div class="grid">
+            <div>
+              <div class="muted">Name</div>
+              <div>${order.customer_name}</div>
+            </div>
+            <div>
+              <div class="muted">Mobile</div>
+              <div>${order.mobile_no || '-'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div style="font-weight:600; margin-bottom:8px;">Order Items</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="padding:8px;border:1px solid #e5e7eb;text-align:center;">#</th>
+                <th style="padding:8px;border:1px solid #e5e7eb;">Product</th>
+                <th style="padding:8px;border:1px solid #e5e7eb;">SKU</th>
+                <th style="padding:8px;border:1px solid #e5e7eb;text-align:right;">Qty</th>
+                <th style="padding:8px;border:1px solid #e5e7eb;text-align:right;">Price</th>
+                <th style="padding:8px;border:1px solid #e5e7eb;text-align:right;">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsRows}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <div class="totals-row"><span>Subtotal</span><span>${formatCurrency(order.subtotal)}</span></div>
+            <div class="totals-row"><span>Tax (${parseFloat(String(order.tax_rate)) || 0}% )</span><span>${formatCurrency(order.tax_amount)}</span></div>
+            <div class="totals-row bold"><span>Grand Total</span><span>${formatCurrency(order.total_amount)}</span></div>
+          </div>
+        </div>
+
+        <div class="no-print" style="margin-top:16px; text-align:right;">
+          <button onclick="window.print()" style="padding:8px 12px; background:#2563eb; color:white; border:none; border-radius:6px;">Print</button>
+        </div>
+      </body>
+    </html>`
+
+    const w = window.open('', '_blank', 'width=900,height=1000')
+    if (!w) return
+    w.document.open()
+    w.document.write(html)
+    w.document.close()
+    w.focus()
+  }
+
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false)
     setEditingOrder(null)
@@ -256,9 +360,9 @@ const page = () => {
       case 'old':
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       case 'amount_high':
-        return (parseFloat(b.total_amount) || 0) - (parseFloat(a.total_amount) || 0)
+        return (parseFloat(String(b.total_amount)) || 0) - (parseFloat(String(a.total_amount)) || 0)
       case 'amount_low':
-        return (parseFloat(a.total_amount) || 0) - (parseFloat(b.total_amount) || 0)
+        return (parseFloat(String(a.total_amount)) || 0) - (parseFloat(String(b.total_amount)) || 0)
       default:
         return 0
     }
@@ -380,17 +484,17 @@ const page = () => {
                           SKU: {order.items[0]?.product_sku} | Qty: {order.items[0]?.quantity}
                         </p>
                         <p className="text-xs text-gray-500">
-                          Price: ₹{(parseFloat(order.items[0]?.unit_price) || 0).toFixed(2)} | Total: ₹{(parseFloat(order.items[0]?.subtotal) || 0).toFixed(2)}
+                          Price: ₹{(parseFloat(String(order.items[0]?.unit_price)) || 0).toFixed(2)} | Total: ₹{(parseFloat(String(order.items[0]?.subtotal)) || 0).toFixed(2)}
                         </p>
                       </div>
                     </div>
 
                     {/* Price Section */}
                     <div className="text-center min-w-[80px]">
-                      <p className="text-lg font-bold">₹{(parseFloat(order.total_amount) || 0).toFixed(2)}</p>
-                      {(parseFloat(order.tax_amount) || 0) > 0 && (
+                      <p className="text-lg font-bold">₹{(parseFloat(String(order.total_amount)) || 0).toFixed(2)}</p>
+                      {(parseFloat(String(order.tax_amount)) || 0) > 0 && (
                         <p className="text-xs text-gray-500">
-                          Tax: ₹{(parseFloat(order.tax_amount) || 0).toFixed(2)}
+                          Tax: ₹{(parseFloat(String(order.tax_amount)) || 0).toFixed(2)}
                         </p>
                       )}
                     </div>
@@ -418,7 +522,7 @@ const page = () => {
 
                     {/* Action Section */}
                     <div className="flex flex-col gap-2 min-w-[120px]">
-                      <Button size="sm" variant="outline" className="flex items-center gap-1 text-xs h-7 bg-blue-500 text-white">
+                      <Button size="sm" variant="outline" onClick={() => handlePrint(order)} className="flex items-center gap-1 text-xs h-7 bg-blue-500 text-white">
                         <Printer className="h-3 w-3" />
                         Print Label
                       </Button>
@@ -461,12 +565,18 @@ interface EditOrderDialogProps {
 
 const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState<Order | null>(null)
+  const { products, fetchProducts } = useProductStore()
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     if (order) {
       setFormData({ ...order })
     }
   }, [order])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
 
   const handleInputChange = (field: keyof Order, value: any) => {
     if (formData) {
@@ -504,6 +614,27 @@ const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClos
       setFormData({ ...formData, items: updatedItems })
     }
   }
+
+  const addProductToOrder = (product: Product) => {
+    if (formData) {
+      const newItem: OrderItem = {
+        id: Date.now(),
+        product_id: parseInt(product.id),
+        product_name: product.name,
+        product_sku: product.sku,
+        quantity: 1,
+        unit_price: product.sell_price,
+        subtotal: product.sell_price
+      }
+      setFormData({ ...formData, items: [...formData.items, newItem] })
+    }
+  }
+
+  // Filter products based on search query
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.sku.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   const handleSave = () => {
     if (formData) {
@@ -566,150 +697,253 @@ const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClos
           <DialogTitle>Edit Order #{formData.id}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Customer Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Customer Information</h3>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="customer_name">Customer Name</Label>
-                <Input
-                  id="customer_name"
-                  value={formData.customer_name}
-                  onChange={(e) => handleInputChange('customer_name', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="mobile_no">Mobile Number</Label>
-                <Input
-                  id="mobile_no"
-                  value={formData.mobile_no}
-                  onChange={(e) => handleInputChange('mobile_no', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="order_date">Order Date</Label>
-                <Input
-                  id="order_date"
-                  type="date"
-                  value={formData.order_date}
-                  onChange={(e) => handleInputChange('order_date', e.target.value)}
-                />
-              </div>
-            </div>
+        <div className="flex gap-6">
+          {/* Left Column - Order Items */}
+          <div className="flex-1">
+            {/* Order Items Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Order Items</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {formData.items.map((item, index) => (
+                    <div key={item.id} className="flex items-center gap-4 p-3 border rounded-lg bg-gray-50">
+                      <div className="w-10 h-10 bg-blue-200 rounded flex items-center justify-center">
+                        <Package className="h-5 w-5 text-blue-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <Input
+                              value={item.product_name}
+                              onChange={(e) => handleItemChange(item.id, 'product_name', e.target.value)}
+                              placeholder="Product Name"
+                              className="mb-2"
+                            />
+                            <div className="flex gap-2">
+                              <Input
+                                value={item.product_sku}
+                                onChange={(e) => handleItemChange(item.id, 'product_sku', e.target.value)}
+                                placeholder="SKU"
+                                className="w-32"
+                              />
+                              <Input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                                placeholder="Qty"
+                                className="w-20"
+                              />
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={item.unit_price}
+                                onChange={(e) => handleItemChange(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
+                                placeholder="Price"
+                                className="w-24"
+                              />
+                              <span className="text-sm text-gray-500">each</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={item.subtotal}
+                                onChange={(e) => handleItemChange(item.id, 'subtotal', parseFloat(e.target.value) || 0)}
+                                placeholder="Subtotal"
+                                className="w-24"
+                              />
+                              <Button
+                                onClick={() => handleRemoveItem(item.id)}
+                                size="sm"
+                                variant="destructive"
+                                className="h-8 w-8 p-0"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Products Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  <CardTitle>Products</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Search products by name or SKU..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full"
+                  />
+                  
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {filteredProducts.map((product) => (
+                      <div key={product.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-orange-200 rounded flex items-center justify-center">
+                            <Package className="h-4 w-4 text-orange-500" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-orange-500">{product.name}</h3>
+                            <p className="text-xs text-gray-500">SKU: {product.sku}</p>
+                            <p className="text-xs text-gray-500">Stock: {product.quantityInStock}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">₹{product.sell_price}</p>
+                          <Badge variant="outline" className="text-xs">
+                            {product.status}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            onClick={() => addProductToOrder(product)}
+                            className="ml-2 bg-blue-500 hover:bg-blue-600"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Payment Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Payment Information</h3>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="payment_method">Payment Method</Label>
-                <Select value={formData.payment_method} onValueChange={(value) => handleInputChange('payment_method', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select payment method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
-                    <SelectItem value="upi">UPI</SelectItem>
-                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="cheque">Cheque</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="transaction_id">Transaction ID</Label>
-                <Input
-                  id="transaction_id"
-                  value={formData.transaction_id || ''}
-                  onChange={(e) => handleInputChange('transaction_id', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="status">Order Status</Label>
-                <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="in progress">In Progress</SelectItem>
-                    <SelectItem value="fulfilled">Fulfilled</SelectItem>
-                    <SelectItem value="shipped">Shipped</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        </div>
+          {/* Right Column - Customer Details, Payment Info, Order Summary */}
+          <div className="w-80 space-y-4">
+            {/* Customer Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="customer_name">Customer Name *</Label>
+                    <Input
+                      id="customer_name"
+                      value={formData.customer_name}
+                      onChange={(e) => handleInputChange('customer_name', e.target.value)}
+                      placeholder="Enter customer name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="mobile_no">Mobile No *</Label>
+                    <Input
+                      id="mobile_no"
+                      value={formData.mobile_no}
+                      onChange={(e) => handleInputChange('mobile_no', e.target.value)}
+                      placeholder="Enter mobile number"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="order_date">Date Sell</Label>
+                    <Input
+                      id="order_date"
+                      type="date"
+                      value={formData.order_date}
+                      onChange={(e) => handleInputChange('order_date', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Order Items */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Order Items</h3>
-            <Button onClick={handleAddItem} size="sm" variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
-          </div>
-          
-          <div className="space-y-3">
-            {formData.items.map((item, index) => (
-              <div key={item.id} className="grid grid-cols-1 md:grid-cols-6 gap-3 p-3 border rounded-lg">
-                <div>
-                  <Label>Product Name</Label>
-                  <Input
-                    value={item.product_name}
-                    onChange={(e) => handleItemChange(item.id, 'product_name', e.target.value)}
-                  />
+            {/* Payment Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="payment_method">Payment Method</Label>
+                    <Select value={formData.payment_method} onValueChange={(value) => handleInputChange('payment_method', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="card">Card</SelectItem>
+                        <SelectItem value="upi">UPI</SelectItem>
+                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                        <SelectItem value="cheque">Cheque</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="transaction_id">Transaction ID</Label>
+                    <Input
+                      id="transaction_id"
+                      value={formData.transaction_id || ''}
+                      onChange={(e) => handleInputChange('transaction_id', e.target.value)}
+                      placeholder="Enter transaction ID"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="status">Order Status</Label>
+                    <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="in progress">In Progress</SelectItem>
+                        <SelectItem value="fulfilled">Fulfilled</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div>
-                  <Label>SKU</Label>
-                  <Input
-                    value={item.product_sku}
-                    onChange={(e) => handleItemChange(item.id, 'product_sku', e.target.value)}
-                  />
+              </CardContent>
+            </Card>
+
+            {/* Order Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>₹{(parseFloat(String(formData.subtotal)) || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tax ({(parseFloat(String(formData.tax_rate)) || 0).toFixed(2)}%):</span>
+                    <span>₹{(parseFloat(String(formData.tax_amount)) || 0).toFixed(2)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Gross Amount:</span>
+                    <span>₹{(parseFloat(String(formData.total_amount)) || 0).toFixed(2)}</span>
+                  </div>
                 </div>
-                <div>
-                  <Label>Quantity</Label>
-                  <Input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                  />
-                </div>
-                <div>
-                  <Label>Unit Price</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={item.unit_price}
-                    onChange={(e) => handleItemChange(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
-                  />
-                </div>
-                <div>
-                  <Label>Subtotal</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={item.subtotal}
-                    onChange={(e) => handleItemChange(item.id, 'subtotal', parseFloat(e.target.value) || 0)}
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    onClick={() => handleRemoveItem(item.id)}
-                    size="sm"
-                    variant="destructive"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              </CardContent>
+            </Card>
           </div>
         </div>
 

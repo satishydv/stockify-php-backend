@@ -49,7 +49,11 @@ export const TaxTable: React.FC<TaxTableProps> = ({ onEdit }) => {
     const success = await toggleTaxStatus(id, newStatus)
     
     if (success) {
-      toast.success(`Tax ${newStatus === 'enable' ? 'enabled' : 'disabled'} successfully`)
+      if (newStatus === 'enable') {
+        toast.success('Tax enabled successfully. All other taxes have been disabled.')
+      } else {
+        toast.success('Tax disabled successfully')
+      }
     } else {
       toast.error('Failed to update tax status')
     }

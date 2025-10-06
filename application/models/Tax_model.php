@@ -52,4 +52,10 @@ class Tax_model extends CI_Model {
         $this->db->set('status', $status);
         return $this->db->update('taxes');
     }
+
+    public function disable_all_taxes_except($exclude_id) {
+        $this->db->set('status', 'disable');
+        $this->db->where('id !=', $exclude_id);
+        return $this->db->update('taxes');
+    }
 }

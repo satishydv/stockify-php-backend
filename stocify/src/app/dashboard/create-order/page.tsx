@@ -39,6 +39,7 @@ interface CustomerForm {
   customerName: string
   mobileNo: string
   dateSell: string
+  customerAddress: string
 }
 
 interface PaymentForm {
@@ -57,7 +58,8 @@ export default function CreateOrderPage() {
   const [customerForm, setCustomerForm] = useState<CustomerForm>({
     customerName: "",
     mobileNo: "",
-    dateSell: new Date().toISOString().split('T')[0]
+    dateSell: new Date().toISOString().split('T')[0],
+    customerAddress: ""
   })
   const [selectedTax, setSelectedTax] = useState<Tax | null>(null)
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
@@ -134,7 +136,7 @@ export default function CreateOrderPage() {
 
   // Handle form input changes
   const handleFormChange = (field: keyof CustomerForm, value: string) => {
-    setCustomerForm(prev => ({ ...prev, [field]: value }))
+    setCustomerForm(prev => ({ ...prev, [field]: value || "" }))
   }
 
   // Handle payment form changes
@@ -183,6 +185,7 @@ export default function CreateOrderPage() {
       // Append customer details
       formData.append('customer_name', customerForm.customerName)
       formData.append('mobile_no', customerForm.mobileNo)
+      formData.append('customer_address', customerForm.customerAddress)
       formData.append('order_date', customerForm.dateSell)
 
       // Append order totals
@@ -190,7 +193,7 @@ export default function CreateOrderPage() {
       formData.append('tax_rate', (parseFloat(selectedTax?.rate?.toString() || '0')).toFixed(2))
       formData.append('tax_amount', taxAmount.toFixed(2))
       formData.append('total_amount', grossAmount.toFixed(2))
-      formData.append('status', 'new')
+      // Status is set to 'fulfilled' by default in the backend
 
       // Append payment details
       formData.append('payment_method', paymentForm.paymentMethod)
@@ -453,6 +456,15 @@ export default function CreateOrderPage() {
                       value={customerForm.mobileNo}
                       onChange={(e) => handleFormChange('mobileNo', e.target.value)}
                       placeholder="Enter mobile number"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="customerAddress">Customer Address</Label>
+                    <Input
+                      id="customerAddress"
+                      value={customerForm.customerAddress || ""}
+                      onChange={(e) => handleFormChange('customerAddress', e.target.value)}
+                      placeholder="Enter customer address"
                     />
                   </div>
                   <div>

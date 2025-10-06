@@ -12,6 +12,12 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
+  name?: string;
+  address?: string;
+  role?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export function useAuth() {

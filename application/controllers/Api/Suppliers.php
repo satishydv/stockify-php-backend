@@ -6,6 +6,15 @@ class Suppliers extends CI_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model('Supplier_model');
+        
+        // Enable CORS
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+        
+        if ($this->input->method() === 'options') {
+            exit();
+        }
     }
     
     public function index() {
@@ -43,55 +52,79 @@ class Suppliers extends CI_Controller {
     }
     
     public function create() {
-        $input = json_decode($this->input->raw_input_stream, true);
+        try {
+            $input = json_decode($this->input->raw_input_stream, true);
+            
+            // Validate required fields
+            if (!isset($input['name']) || empty($input['name'])) {
+                $this->output
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'success' => false,
+                        'error' => 'Name is required'
+                    ]));
+                return;
+            }
         
-        // Validate required fields
-        if (!isset($input['name'])) {
-            $this->output
-                ->set_status_header(400)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'error' => 'Name is required'
-                ]));
-            return;
-        }
+            // Check for duplicate name
+            if ($this->Supplier_model->get_supplier_by_name($input['name'])) {
+                $this->output
+                    ->set_status_header(409)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'success' => false,
+                        'error' => 'Supplier with this name already exists'
+                    ]));
+                return;
+            }
         
-        // Check for duplicate name
-        if ($this->Supplier_model->get_supplier_by_name($input['name'])) {
-            $this->output
-                ->set_status_header(409)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'error' => 'Supplier with this name already exists'
-                ]));
-            return;
-        }
-        
-        // Prepare supplier data
+        // Prepare supplier data - map frontend fields to database fields
         $supplier_data = [
             'name' => $input['name'],
-            'contact_info' => isset($input['contactInfo']) ? $input['contactInfo'] : '',
+            'email' => isset($input['email']) ? $input['email'] : '',
+            'phone' => isset($input['phone']) ? $input['phone'] : '',
+            'street' => isset($input['companyLocation']['street']) ? $input['companyLocation']['street'] : '',
+            'city' => isset($input['companyLocation']['city']) ? $input['companyLocation']['city'] : '',
+            'state' => isset($input['companyLocation']['state']) ? $input['companyLocation']['state'] : '',
+            'zip' => isset($input['companyLocation']['zip']) ? $input['companyLocation']['zip'] : '',
+            'country' => isset($input['companyLocation']['country']) ? $input['companyLocation']['country'] : 'INDIA',
+            'gstin' => isset($input['gstin']) ? $input['gstin'] : null,
+            'website' => isset($input['website']) ? $input['website'] : null,
+            'category' => isset($input['category']) ? $input['category'] : 'Other',
             'status' => isset($input['status']) ? $input['status'] : 'active'
         ];
         
         $supplier_id = $this->Supplier_model->create_supplier($supplier_data);
         
-        if ($supplier_id) {
-            $supplier = $this->Supplier_model->get_supplier_by_id($supplier_id);
-            $this->output
-                ->set_status_header(201)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'success' => true,
-                    'message' => 'Supplier created successfully',
-                    'supplier' => $supplier
-                ]));
-        } else {
+            if ($supplier_id) {
+                // Get the created supplier to return in response
+                $supplier = $this->Supplier_model->get_supplier_by_id($supplier_id);
+                
+                $this->output
+                    ->set_status_header(201)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'success' => true,
+                        'message' => 'Supplier created successfully',
+                        'supplier' => $supplier
+                    ]));
+            } else {
+                $this->output
+                    ->set_status_header(500)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'success' => false,
+                        'error' => 'Failed to create supplier'
+                    ]));
+            }
+        } catch (Exception $e) {
             $this->output
                 ->set_status_header(500)
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
-                    'error' => 'Failed to create supplier'
+                    'success' => false,
+                    'error' => 'Server error: ' . $e->getMessage()
                 ]));
         }
     }

@@ -172,6 +172,11 @@ class Taxes extends CI_Controller {
                 return;
             }
             
+            // If enabling a tax, disable all other taxes first
+            if (isset($input['status']) && $input['status'] === 'enable') {
+                $this->Tax_model->disable_all_taxes_except($id);
+            }
+            
             $result = $this->Tax_model->update_tax($id, $data);
             
             if ($result) {

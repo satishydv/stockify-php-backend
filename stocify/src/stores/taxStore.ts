@@ -129,6 +129,18 @@ export const useTaxStore = create<TaxStore>((set, get) => ({
   },
 
   toggleTaxStatus: async (id, status) => {
+    const { taxes } = get()
+    
+    // If enabling a tax, disable all other taxes first
+    if (status === 'enable') {
+      const otherTaxes = taxes.filter(tax => tax.id !== id && tax.status === 'enable')
+      
+      // Disable all other enabled taxes
+      for (const tax of otherTaxes) {
+        await get().updateTax(tax.id, { status: 'disable' })
+      }
+    }
+    
     return get().updateTax(id, { status })
   },
 

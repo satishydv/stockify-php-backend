@@ -86,6 +86,13 @@ class ApiClient {
     });
   }
 
+  async changePassword(currentPassword: string, newPassword: string) {
+    return this.request('/api/auth/change_password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  }
+
   // User management endpoints
   async getUsers() {
     return this.request('/api/users');

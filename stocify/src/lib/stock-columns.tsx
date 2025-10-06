@@ -42,7 +42,7 @@ export const useStockColumns = (onEditStock?: (stock: Stock) => void): ColumnDef
       header: "Quantity Available",
       cell: ({ row }) => {
         const quantity = row.getValue("quantityAvailable") as number
-        const minimumLevel = row.getValue("minimumStockLevel") as number
+        const minimumLevel = row.original.minimumStockLevel
         const isBelowMinLevel = quantity < minimumLevel
         
         return (
@@ -56,20 +56,6 @@ export const useStockColumns = (onEditStock?: (stock: Stock) => void): ColumnDef
             {quantity}
           </span>
         )
-      },
-    },
-    {
-      accessorKey: "minimumStockLevel",
-      header: "Min Level",
-      cell: ({ row }) => {
-        return <span className="text-muted-foreground">{row.getValue("minimumStockLevel")}</span>
-      },
-    },
-    {
-      accessorKey: "maximumStockLevel",
-      header: "Max Level",
-      cell: ({ row }) => {
-        return <span className="text-muted-foreground">{row.getValue("maximumStockLevel")}</span>
       },
     },
     {

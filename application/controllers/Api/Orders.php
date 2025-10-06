@@ -91,12 +91,13 @@ class Orders extends CI_Controller {
                 'id' => $order_id,
                 'customer_name' => $this->input->post('customer_name'),
                 'mobile_no' => $this->input->post('mobile_no'),
+                'customer_address' => $this->input->post('customer_address'),
                 'order_date' => $this->input->post('order_date'),
                 'subtotal' => $this->input->post('subtotal'),
                 'tax_rate' => $this->input->post('tax_rate'),
                 'tax_amount' => $this->input->post('tax_amount'),
                 'total_amount' => $this->input->post('total_amount'),
-                'status' => $this->input->post('status'),
+                'status' => 'fulfilled', // Set default status to fulfilled
                 'payment_method' => $this->input->post('payment_method'),
                 'transaction_id' => $this->input->post('transaction_id'),
                 'payment_attachment' => $payment_attachment_path,
@@ -146,6 +147,9 @@ class Orders extends CI_Controller {
                 if (!$items_result) {
                     throw new Exception("Failed to create order items");
                 }
+
+                // Decrease stock quantities since order is fulfilled by default
+                $this->Order_model->decrease_stock_for_order($order_items_data);
 
                 if ($this->db->trans_status() === FALSE) {
                     $this->db->trans_rollback();

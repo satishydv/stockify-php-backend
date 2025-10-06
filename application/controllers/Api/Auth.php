@@ -108,17 +108,43 @@ class Auth extends CI_Controller {
                 return;
             }
             
-            $this->output
-                ->set_status_header(200)
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'user' => [
-                        'id' => $user['id'],
-                        'email' => $user['email'],
-                        'firstName' => $user['first_name'],
-                        'lastName' => $user['last_name']
-                    ]
-                ]));
+            // Get extended user data with role information
+            $this->db->select('u.id, u.name, u.first_name, u.last_name, u.email, u.address, u.is_verified, u.created_at, u.updated_at, r.id as role_id, r.name as role_name');
+            $this->db->from('users u');
+            $this->db->join('roles r', 'u.role_id = r.id', 'left');
+            $this->db->where('u.id', $decoded->userId);
+            $query = $this->db->get();
+            $extendedUser = $query->row_array();
+            
+            if ($extendedUser) {
+                // Use name field if available, otherwise combine first_name and last_name
+                $displayName = $extendedUser['name'] ?: trim(($extendedUser['first_name'] ?? '') . ' ' . ($extendedUser['last_name'] ?? ''));
+                
+                $this->output
+                    ->set_status_header(200)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'user' => [
+                            'id' => $extendedUser['id'],
+                            'email' => $extendedUser['email'],
+                            'firstName' => $extendedUser['first_name'],
+                            'lastName' => $extendedUser['last_name'],
+                            'name' => $displayName,
+                            'address' => $extendedUser['address'],
+                            'role' => $extendedUser['role_name'] ? strtolower($extendedUser['role_name']) : 'user',
+                            'status' => $extendedUser['is_verified'] ? 'active' : 'inactive',
+                            'createdAt' => $extendedUser['created_at'],
+                            'updatedAt' => $extendedUser['updated_at']
+                        ]
+                    ]));
+            } else {
+                $this->output
+                    ->set_status_header(404)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'message' => 'User not found'
+                    ]));
+            }
         } catch (Exception $e) {
             $this->output
                 ->set_status_header(401)
@@ -175,6 +201,75 @@ class Auth extends CI_Controller {
             ]));
     }
     
+    public function change_password() {
+        $token = $this->get_bearer_token();
+        if (!$token) {
+            $this->output
+                ->set_status_header(401)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'message' => 'Token required'
+                ]));
+            return;
+        }
+
+        $input = json_decode($this->input->raw_input_stream, true);
+        $current = isset($input['currentPassword']) ? $input['currentPassword'] : null;
+        $new = isset($input['newPassword']) ? $input['newPassword'] : null;
+
+        if (!$current || !$new) {
+            $this->output
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'message' => 'Current and new password are required'
+                ]));
+            return;
+        }
+
+        if (strlen($new) < 6) {
+            $this->output
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'message' => 'Password must be at least 6 characters'
+                ]));
+            return;
+        }
+
+        try {
+            $decoded = $this->jwt->decode($token, $this->config->item('jwt_secret'));
+            // IMPORTANT: fetch raw user row that includes password_hash
+            $user = $this->User_model->get_user_by_email($decoded->email);
+            if (!$user || !password_verify($current, $user['password_hash'])) {
+                $this->output
+                    ->set_status_header(401)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'message' => 'Current password is incorrect'
+                    ]));
+                return;
+            }
+
+            $hashed_password = password_hash($new, PASSWORD_DEFAULT);
+            $this->User_model->update_password($user['email'], $hashed_password);
+
+            $this->output
+                ->set_status_header(200)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'message' => 'Password changed successfully'
+                ]));
+        } catch (Exception $e) {
+            $this->output
+                ->set_status_header(401)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'message' => 'Invalid token'
+                ]));
+        }
+    }
+
     public function reset_password() {
         $input = json_decode($this->input->raw_input_stream, true);
         

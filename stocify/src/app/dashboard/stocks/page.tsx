@@ -32,7 +32,7 @@ const page = () => {
             <p className="text-sm text-slate-600">{stocks.length} stock items</p>
           </div>
         </div>
-        <StockDialog />
+        {/* <StockDialog /> */}
       </CardHeader>
       <CardContent>
         <StockTable onEditStock={handleEditStock} />

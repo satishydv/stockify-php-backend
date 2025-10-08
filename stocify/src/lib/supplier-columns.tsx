@@ -185,10 +185,10 @@ export const useSupplierColumns = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleCopy(supplier)}>
+              {/* <DropdownMenuItem onClick={() => handleCopy(supplier)}>
                 <IoCopy className="mr-2 h-4 w-4" />
                 Copy
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem onClick={() => handleEdit(supplier)}>
                 <IoCreate className="mr-2 h-4 w-4" />
                 Edit

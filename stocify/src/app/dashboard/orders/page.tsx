@@ -20,7 +20,8 @@ import {
   Package,
   Edit,
   Plus,
-  Minus
+  Minus,
+  ArrowLeft
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -83,6 +84,9 @@ const page = () => {
   const [sortBy, setSortBy] = useState("new")
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [returningOrder, setReturningOrder] = useState<Order | null>(null)
+  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
+  const [returnItems, setReturnItems] = useState<OrderItem[]>([])
 
   // Fetch orders from API
   useEffect(() => {
@@ -209,10 +213,26 @@ const page = () => {
 
   const formatCurrency = (value: number | string) => `₹${(parseFloat(String(value)) || 0).toFixed(2)}`
 
-  const handlePrint = (order: Order) => {
+  const handlePrint = async (order: Order) => {
     const orderDate = new Date(order.order_date).toLocaleDateString('en-GB', {
       day: '2-digit', month: 'short', year: 'numeric'
     })
+
+    // Fetch company settings (name, phone, email, address, logo)
+    let company: { company_name?: string; phone?: string; email?: string; address?: string; logo_path?: string } = {}
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index.php/api/settings`)
+      if (res.ok) {
+        const data = await res.json()
+        company = data?.settings || {}
+      }
+    } catch (_) {}
+
+    const companyName = company.company_name || 'Company'
+    const companyPhone = company.phone || ''
+    const companyEmail = company.email || ''
+    const companyAddress = company.address || ''
+    const logoUrl = company.logo_path ? `${process.env.NEXT_PUBLIC_API_URL}/public/${company.logo_path}` : ''
 
     const itemsRows = order.items.map((it, idx) => `
       <tr>
@@ -233,9 +253,10 @@ const page = () => {
         <title>Order ${order.id} - Print</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; margin: 24px; color: #111827; }
-          .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+          .header { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items:flex-start; margin-bottom:16px; }
           .title { font-size:22px; font-weight:700; color:#111827; }
           .muted { color:#6b7280; font-size:12px; }
+          .stack-y > * { margin: 10px 0; }
           .section { border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:12px; }
           .grid { display:grid; grid-template-columns: 1fr 1fr; gap:8px 16px; }
           table { width:100%; border-collapse: collapse; margin-top:8px; }
@@ -250,25 +271,23 @@ const page = () => {
       <body>
         <div class="header">
           <div>
-            <div class="title">Order ${order.id}</div>
-            <div class="muted">Date: ${orderDate}</div>
+            ${logoUrl ? `<img src="${logoUrl}" alt="logo" style="height:56px; object-fit:contain;" />` : ''}
+            <div class="title" style="margin-top:6px;">${companyName}</div>
+            <div class="muted" style="margin-top:4px;">${companyEmail || ''}</div>
+            <div class="muted">${companyPhone || ''}</div>
+            <div class="muted">${companyAddress || ''}</div>
           </div>
-          <div class="muted">Mode of Payment: <span style="text-transform:capitalize; color:#111827;">${order.payment_method}</span></div>
+          <div style="text-align:right" class="stack-y">
+            <div class="title">Invoice</div>
+            <div class="muted">Invoice no.: <span style="color:#111827; font-weight:600;">${order.id}</span></div>
+            <div class="muted">Invoice date: <span style="color:#111827; font-weight:600;">${orderDate}</span></div>
+            <div class="muted">Payment method: <span style="text-transform:capitalize; color:#111827; font-weight:600;">${order.payment_method}</span></div>
+            <div class="muted">Customer: <span style="color:#111827; font-weight:600;">${order.customer_name}</span></div>
+            <div class="muted">Mobile: <span style="color:#111827; font-weight:600;">${order.mobile_no || '-'}</span></div>
+          </div>
         </div>
 
-        <div class="section">
-          <div style="font-weight:600; margin-bottom:8px;">Customer Details</div>
-          <div class="grid">
-            <div>
-              <div class="muted">Name</div>
-              <div>${order.customer_name}</div>
-            </div>
-            <div>
-              <div class="muted">Mobile</div>
-              <div>${order.mobile_no || '-'}</div>
-            </div>
-          </div>
-        </div>
+        
 
         <div class="section">
           <div style="font-weight:600; margin-bottom:8px;">Order Items</div>
@@ -312,6 +331,97 @@ const page = () => {
   const handleCloseEditDialog = () => {
     setIsEditDialogOpen(false)
     setEditingOrder(null)
+  }
+
+  const handleReturnOrder = (order: Order) => {
+    setReturningOrder(order)
+    setReturnItems([...order.items])
+    setIsReturnDialogOpen(true)
+  }
+
+  const handleCloseReturnDialog = () => {
+    setIsReturnDialogOpen(false)
+    setReturningOrder(null)
+    setReturnItems([])
+  }
+
+  const handleReturnItemChange = (itemId: number, field: keyof OrderItem, value: any) => {
+    setReturnItems(prevItems =>
+      prevItems.map(item =>
+        item.id === itemId ? { ...item, [field]: value } : item
+      )
+    )
+  }
+
+  const handleRemoveReturnItem = (itemId: number) => {
+    setReturnItems(prevItems => prevItems.filter(item => item.id !== itemId))
+  }
+
+  const handleProcessReturn = async () => {
+    if (!returningOrder) return
+
+    try {
+      // Filter items that have return quantity > 0
+      const itemsToReturn = returnItems.filter(item => item.quantity > 0)
+      
+      if (itemsToReturn.length === 0) {
+        alert('Please select items to return')
+        return
+      }
+
+      // Calculate total return amount
+      const totalReturnAmount = itemsToReturn.reduce((sum, item) => {
+        return sum + (parseFloat(String(item.unit_price)) * item.quantity)
+      }, 0)
+
+      // Prepare return data
+      const returnData = {
+        original_order_id: returningOrder.id,
+        customer_name: returningOrder.customer_name,
+        customer_phone: returningOrder.mobile_no,
+        return_date: new Date().toISOString().split('T')[0], // Today's date
+        total_return_amount: totalReturnAmount.toFixed(2),
+        items: itemsToReturn.map(item => ({
+          product_id: item.product_id,
+          product_name: item.product_name,
+          product_sku: item.product_sku,
+          return_quantity: item.quantity,
+          unit_price: parseFloat(String(item.unit_price)),
+          subtotal: parseFloat(String(item.unit_price)) * item.quantity
+        })),
+        return_reason: 'Customer return request'
+      }
+
+      console.log('Sending return data:', returnData)
+
+      // Call API to create return
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index.php/api/returns/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          ...returnData,
+          items: JSON.stringify(returnData.items)
+        })
+      })
+
+      const result = await response.json()
+      console.log('Return API response:', result)
+
+      if (result.success) {
+        alert(`Return processed successfully! Return ID: ${result.return_id}`)
+        handleCloseReturnDialog()
+        // Optionally refresh the orders list
+        fetchOrders()
+      } else {
+        alert(`Error: ${result.message}`)
+      }
+      
+    } catch (error) {
+      console.error('Error processing return:', error)
+      alert('Error processing return')
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -489,6 +599,19 @@ const page = () => {
                       </div>
                     </div>
 
+                    {/* Return Button Section */}
+                    <div className="text-center min-w-[100px]">
+                      <Button
+                        onClick={() => handleReturnOrder(order)}
+                        size="sm"
+                        variant="outline"
+                        className="flex items-center gap-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Return
+                      </Button>
+                    </div>
+
                     {/* Price Section */}
                     <div className="text-center min-w-[80px]">
                       <p className="text-lg font-bold">₹{(parseFloat(String(order.total_amount)) || 0).toFixed(2)}</p>
@@ -526,7 +649,7 @@ const page = () => {
                         <Printer className="h-3 w-3" />
                         Print Label
                       </Button>
-                      <Button 
+                      {/* <Button 
                         size="sm" 
                         variant="destructive" 
                         onClick={() => handleDeleteOrder(order.id)}
@@ -534,7 +657,7 @@ const page = () => {
                       >
                         <Trash2 className="h-3 w-3" />
                         Delete Order
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                 </div>
@@ -550,6 +673,17 @@ const page = () => {
         isOpen={isEditDialogOpen}
         onClose={handleCloseEditDialog}
         onSave={handleUpdateOrder}
+      />
+
+      {/* Return Order Dialog */}
+      <ReturnOrderDialog 
+        order={returningOrder}
+        isOpen={isReturnDialogOpen}
+        onClose={handleCloseReturnDialog}
+        onProcessReturn={handleProcessReturn}
+        returnItems={returnItems}
+        onReturnItemChange={handleReturnItemChange}
+        onRemoveReturnItem={handleRemoveReturnItem}
       />
     </div>
   )
@@ -692,235 +826,325 @@ const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClos
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="min-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="min-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
-          <DialogTitle>Edit Order #{formData.id}</DialogTitle>
+          <DialogTitle className="text-3xl font-bold text-orange-500">Edit Order #{formData.id}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex gap-6">
-          {/* Left Column - Order Items */}
-          <div className="flex-1">
-            {/* Order Items Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          {/* Left Side - Product List */}
+          <div className="lg:col-span-1">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Order Items</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {formData.items.map((item, index) => (
-                    <div key={item.id} className="flex items-center gap-4 p-3 border rounded-lg bg-gray-50">
-                      <div className="w-10 h-10 bg-blue-200 rounded flex items-center justify-center">
-                        <Package className="h-5 w-5 text-blue-500" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1">
-                            <Input
-                              value={item.product_name}
-                              onChange={(e) => handleItemChange(item.id, 'product_name', e.target.value)}
-                              placeholder="Product Name"
-                              className="mb-2"
-                            />
-                            <div className="flex gap-2">
-                              <Input
-                                value={item.product_sku}
-                                onChange={(e) => handleItemChange(item.id, 'product_sku', e.target.value)}
-                                placeholder="SKU"
-                                className="w-32"
-                              />
-                              <Input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                                placeholder="Qty"
-                                className="w-20"
-                              />
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={item.unit_price}
-                                onChange={(e) => handleItemChange(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
-                                placeholder="Price"
-                                className="w-24"
-                              />
-                              <span className="text-sm text-gray-500">each</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={item.subtotal}
-                                onChange={(e) => handleItemChange(item.id, 'subtotal', parseFloat(e.target.value) || 0)}
-                                placeholder="Subtotal"
-                                className="w-24"
-                              />
-                              <Button
-                                onClick={() => handleRemoveItem(item.id)}
-                                size="sm"
-                                variant="destructive"
-                                className="h-8 w-8 p-0"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Products Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Search className="h-4 w-4" />
-                  <CardTitle>Products</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+                <CardTitle className="flex items-center gap-2">
+                  <Search className="w-5 h-5" />
+                  Products
+                </CardTitle>
+                <div className="mt-4">
                   <Input
                     placeholder="Search products by name or SKU..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full"
                   />
-                  
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {filteredProducts.map((product) => (
-                      <div key={product.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-orange-200 rounded flex items-center justify-center">
-                            <Package className="h-4 w-4 text-orange-500" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-orange-500">{product.name}</h3>
-                            <p className="text-xs text-gray-500">SKU: {product.sku}</p>
-                            <p className="text-xs text-gray-500">Stock: {product.quantityInStock}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">₹{product.sell_price}</p>
-                          <Badge variant="outline" className="text-xs">
-                            {product.status}
-                          </Badge>
-                          <Button
-                            size="sm"
-                            onClick={() => addProductToOrder(product)}
-                            className="ml-2 bg-blue-500 hover:bg-blue-600"
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add
-                          </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {filteredProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">{product.icon}</div>
+                        <div>
+                          <h3 className="font-medium text-orange-500">{product.name}</h3>
+                          <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                          <p className="text-sm text-gray-500">Stock: {product.quantityInStock}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-medium text-gray-900">₹{product.sell_price}</p>
+                          <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
+                            {product.status}
+                          </Badge>
+                        </div>
+                        <Button
+                          onClick={() => addProductToOrder(product)}
+                          disabled={product.quantityInStock === 0}
+                          size="sm"
+                          className="flex items-center gap-1"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {filteredProducts.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      No products found matching your search.
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Right Column - Customer Details, Payment Info, Order Summary */}
-          <div className="w-80 space-y-4">
-            {/* Customer Details */}
+          {/* Right Side - Cart and Form */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Cart */}
             <Card>
               <CardHeader>
-                <CardTitle>Customer Details</CardTitle>
+                <CardTitle>Selected Products</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="customer_name">Customer Name *</Label>
-                    <Input
-                      id="customer_name"
-                      value={formData.customer_name}
-                      onChange={(e) => handleInputChange('customer_name', e.target.value)}
-                      placeholder="Enter customer name"
-                    />
+                {formData.items.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No products selected
                   </div>
-                  <div>
-                    <Label htmlFor="mobile_no">Mobile No *</Label>
-                    <Input
-                      id="mobile_no"
-                      value={formData.mobile_no}
-                      onChange={(e) => handleInputChange('mobile_no', e.target.value)}
-                      placeholder="Enter mobile number"
-                    />
+                ) : (
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {formData.items.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="text-lg">{item.product_name ? '📦' : '📦'}</div>
+                          <div>
+                            <p className="font-medium text-sm">{item.product_name || 'Product Name'}</p>
+                            <p className="text-xs text-gray-500">₹{item.unit_price} each</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() => handleItemChange(item.id, 'quantity', Math.max(1, item.quantity - 1))}
+                            size="sm"
+                            variant="outline"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
+                          <Button
+                            onClick={() => handleItemChange(item.id, 'quantity', item.quantity + 1)}
+                            size="sm"
+                            variant="outline"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            onClick={() => handleRemoveItem(item.id)}
+                            size="sm"
+                            variant="outline"
+                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <Label htmlFor="order_date">Date Sell</Label>
-                    <Input
-                      id="order_date"
-                      type="date"
-                      value={formData.order_date}
-                      onChange={(e) => handleInputChange('order_date', e.target.value)}
-                    />
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Payment Information */}
+            {/* Bottom Row - Order Summary and Customer Form */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {/* Order Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Subtotal:</span>
+                      <span>₹{(parseFloat(String(formData.subtotal)) || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tax ({(parseFloat(String(formData.tax_rate)) || 0).toFixed(2)}%):</span>
+                      <span>₹{(parseFloat(String(formData.tax_amount)) || 0).toFixed(2)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Gross Amount:</span>
+                      <span>₹{(parseFloat(String(formData.total_amount)) || 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Customer Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customer Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="customer_name">Customer Name *</Label>
+                      <Input
+                        id="customer_name"
+                        value={formData.customer_name}
+                        onChange={(e) => handleInputChange('customer_name', e.target.value)}
+                        placeholder="Enter customer name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="mobile_no">Mobile No *</Label>
+                      <Input
+                        id="mobile_no"
+                        value={formData.mobile_no}
+                        onChange={(e) => handleInputChange('mobile_no', e.target.value)}
+                        placeholder="Enter mobile number"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="order_date">Date Sell</Label>
+                      <Input
+                        id="order_date"
+                        type="date"
+                        value={formData.order_date}
+                        onChange={(e) => handleInputChange('order_date', e.target.value)}
+                        className="pr-8 [&::-webkit-calendar-picker-indicator]:ml-auto [&::-webkit-calendar-picker-indicator]:mr-3"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="payment_method">Payment Method</Label>
+                      <Select value={formData.payment_method} onValueChange={(value) => handleInputChange('payment_method', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select payment method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="card">Card</SelectItem>
+                          <SelectItem value="upi">UPI</SelectItem>
+                          <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                          <SelectItem value="cheque">Cheque</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              onClick={handleSave}
+              className="w-full"
+              size="lg"
+            >
+              <FileText className="w-5 h-5 mr-2" />
+              Save Changes
+            </Button>
+          </div>
+        </div>
+
+        <DialogFooter className="mt-6">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// Return Order Dialog Component
+interface ReturnOrderDialogProps {
+  order: Order | null
+  isOpen: boolean
+  onClose: () => void
+  onProcessReturn: () => void
+  returnItems: OrderItem[]
+  onReturnItemChange: (itemId: number, field: keyof OrderItem, value: any) => void
+  onRemoveReturnItem: (itemId: number) => void
+}
+
+const ReturnOrderDialog: React.FC<ReturnOrderDialogProps> = ({ 
+  order, 
+  isOpen, 
+  onClose, 
+  onProcessReturn,
+  returnItems,
+  onReturnItemChange,
+  onRemoveReturnItem
+}) => {
+  if (!order) return null
+
+  const formatCurrency = (value: number | string) => `₹${(parseFloat(String(value)) || 0).toFixed(2)}`
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="min-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto p-6">
+        <DialogHeader>
+          <DialogTitle className="text-3xl font-bold text-orange-500">Return Order #{order.id}</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          {/* Left Side - Order Items */}
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Payment Information</CardTitle>
+                <CardTitle>Select Items to Return</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="payment_method">Payment Method</Label>
-                    <Select value={formData.payment_method} onValueChange={(value) => handleInputChange('payment_method', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select payment method" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cash">Cash</SelectItem>
-                        <SelectItem value="card">Card</SelectItem>
-                        <SelectItem value="upi">UPI</SelectItem>
-                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                        <SelectItem value="cheque">Cheque</SelectItem>
-                      </SelectContent>
-                    </Select>
+                {returnItems.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No items available for return
                   </div>
-                  <div>
-                    <Label htmlFor="transaction_id">Transaction ID</Label>
-                    <Input
-                      id="transaction_id"
-                      value={formData.transaction_id || ''}
-                      onChange={(e) => handleInputChange('transaction_id', e.target.value)}
-                      placeholder="Enter transaction ID"
-                    />
+                ) : (
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {returnItems.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="text-lg">📦</div>
+                          <div>
+                            <p className="font-medium text-sm">{item.product_name}</p>
+                            <p className="text-xs text-gray-500">SKU: {item.product_sku}</p>
+                            <p className="text-xs text-gray-500">₹{item.unit_price} each</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() => onReturnItemChange(item.id, 'quantity', Math.max(0, item.quantity - 1))}
+                            size="sm"
+                            variant="outline"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
+                          <Button
+                            onClick={() => onReturnItemChange(item.id, 'quantity', item.quantity + 1)}
+                            size="sm"
+                            variant="outline"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            onClick={() => onRemoveReturnItem(item.id)}
+                            size="sm"
+                            variant="outline"
+                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <Label htmlFor="status">Order Status</Label>
-                    <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="in progress">In Progress</SelectItem>
-                        <SelectItem value="fulfilled">Fulfilled</SelectItem>
-                        <SelectItem value="shipped">Shipped</SelectItem>
-                        <SelectItem value="delivered">Delivered</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
+          </div>
 
+          {/* Right Side - Order Summary and Customer Details */}
+          <div className="lg:col-span-1 space-y-6">
             {/* Order Summary */}
             <Card>
               <CardHeader>
@@ -930,16 +1154,50 @@ const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClos
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span>₹{(parseFloat(String(formData.subtotal)) || 0).toFixed(2)}</span>
+                    <span>{formatCurrency(order.subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Tax ({(parseFloat(String(formData.tax_rate)) || 0).toFixed(2)}%):</span>
-                    <span>₹{(parseFloat(String(formData.tax_amount)) || 0).toFixed(2)}</span>
+                    <span>Tax ({(parseFloat(String(order.tax_rate)) || 0).toFixed(2)}%):</span>
+                    <span>{formatCurrency(order.tax_amount)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
-                    <span>Gross Amount:</span>
-                    <span>₹{(parseFloat(String(formData.total_amount)) || 0).toFixed(2)}</span>
+                    <span>Total Amount:</span>
+                    <span>{formatCurrency(order.total_amount)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Customer Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Customer Name</Label>
+                    <Input value={order.customer_name} disabled />
+                  </div>
+                  <div>
+                    <Label>Mobile No</Label>
+                    <Input value={order.mobile_no} disabled />
+                  </div>
+                  <div>
+                    <Label>Order Date</Label>
+                    <Input 
+                      value={new Date(order.order_date).toLocaleDateString('en-GB', { 
+                        day: '2-digit', 
+                        month: 'short', 
+                        year: 'numeric' 
+                      })} 
+                      disabled 
+                    />
+                  </div>
+                  <div>
+                    <Label>Payment Method</Label>
+                    <Input value={order.payment_method} disabled />
                   </div>
                 </div>
               </CardContent>
@@ -947,12 +1205,13 @@ const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClos
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="mt-6">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>
-            Save Changes
+          <Button onClick={onProcessReturn} className="bg-orange-600 hover:bg-orange-700">
+            <FileText className="w-5 h-5 mr-2" />
+            Process Return
           </Button>
         </DialogFooter>
       </DialogContent>

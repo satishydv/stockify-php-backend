@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -49,6 +50,7 @@ interface PaymentForm {
 }
 
 export default function CreateOrderPage() {
+  const router = useRouter()
   const { products, loading, fetchProducts } = useProductStore()
   const { taxes, fetchTaxes } = useTaxStore()
   const { addOrder } = useOrderStore()
@@ -250,7 +252,8 @@ export default function CreateOrderPage() {
       setCustomerForm({
         customerName: "",
         mobileNo: "",
-        dateSell: new Date().toISOString().split('T')[0]
+        dateSell: new Date().toISOString().split('T')[0],
+        customerAddress: ""
       })
       setPaymentForm({
         paymentMethod: "",
@@ -262,6 +265,9 @@ export default function CreateOrderPage() {
       // Reset tax selection
       const enabledTax = taxes.find(tax => tax.status === 'enable')
       setSelectedTax(enabledTax || null)
+
+      // Redirect to orders page
+      router.push('/dashboard/orders')
 
     } catch (error: any) {
       console.error("Error creating order:", error)
@@ -322,7 +328,7 @@ export default function CreateOrderPage() {
                     <div className="flex items-center gap-3">
                       <div className="text-right">
                         <p className="font-medium text-gray-900">₹{product.sell_price}</p>
-                        <Badge variant={product.status === 'published' ? 'default' : 'secondary'}>
+                        <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
                           {product.status}
                         </Badge>
                       </div>
@@ -469,12 +475,13 @@ export default function CreateOrderPage() {
                   </div>
                   <div>
                     <Label htmlFor="dateSell">Date Sell</Label>
-                    <Input
-                      id="dateSell"
-                      type="date"
-                      value={customerForm.dateSell}
-                      onChange={(e) => handleFormChange('dateSell', e.target.value)}
-                    />
+                      <Input
+                        id="dateSell"
+                        type="date"
+                        value={customerForm.dateSell}
+                        onChange={(e) => handleFormChange('dateSell', e.target.value)}
+                        className="pr-8 [&::-webkit-calendar-picker-indicator]:ml-47 [&::-webkit-calendar-picker-indicator]:mr-1"
+                      />
                   </div>
                 </div>
               </CardContent>
@@ -524,6 +531,12 @@ export default function CreateOrderPage() {
                     <p className="text-sm text-gray-600"><strong>Name:</strong> {customerForm.customerName}</p>
                     <p className="text-sm text-gray-600"><strong>Mobile:</strong> {customerForm.mobileNo}</p>
                     <p className="text-sm text-gray-600"><strong>Date:</strong> {customerForm.dateSell}</p>
+                    <p className="text-sm text-gray-600"><strong>Time:</strong> {new Date().toLocaleTimeString('en-US', { 
+                      hour: '2-digit', 
+                      minute: '2-digit', 
+                      second: '2-digit',
+                      hour12: true 
+                    })}</p>
                   </div>
 
                   {/* Cart Items */}

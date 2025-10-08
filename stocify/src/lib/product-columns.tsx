@@ -179,10 +179,10 @@ export const useProductColumns = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleCopy(product)}>
+            {/* <DropdownMenuItem onClick={() => handleCopy(product)}>
               <IoCopy className="mr-2 h-4 w-4" />
               Copy
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuItem onClick={() => handleEdit(product)}>
               <IoCreate className="mr-2 h-4 w-4" />
               Edit

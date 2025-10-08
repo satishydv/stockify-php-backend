@@ -115,10 +115,10 @@ export const useStockColumns = (onEditStock?: (stock: Stock) => void): ColumnDef
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleCopy}>
+              {/* <DropdownMenuItem onClick={handleCopy}>
                 <IoCopy className="mr-2 h-4 w-4" />
                 Copy
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem onClick={handleEdit}>
                 <IoCreate className="mr-2 h-4 w-4" />
                 Edit

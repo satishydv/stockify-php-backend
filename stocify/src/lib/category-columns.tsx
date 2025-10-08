@@ -121,10 +121,10 @@ export const useCategoryColumns = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleCopy(category)}>
+              {/* <DropdownMenuItem onClick={() => handleCopy(category)}>
                 <IoCopy className="mr-2 h-4 w-4" />
                 Copy
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem onClick={() => handleEdit(category)}>
                 <IoCreate className="mr-2 h-4 w-4" />
                 Edit

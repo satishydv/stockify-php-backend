@@ -84,13 +84,17 @@ const Navbar = () => {
           <DropdownMenuContent sideOffset={10}>
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="h-[1.2rem] w-[1.2rem] mr-2" />
-              Profile
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/profile">
+                <User className="h-[1.2rem] w-[1.2rem] mr-2" />
+                Profile
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="h-[1.2rem] w-[1.2rem] mr-2" />
-              Settings
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/change-pass">
+                <Settings className="h-[1.2rem] w-[1.2rem] mr-2" />
+                Change Password
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem 
               variant="destructive"

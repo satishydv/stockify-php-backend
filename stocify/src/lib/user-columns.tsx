@@ -116,10 +116,10 @@ export const useUserColumns = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleCopy(user)}>
+              {/* <DropdownMenuItem onClick={() => handleCopy(user)}>
                 <IoCopy className="mr-2 h-4 w-4" />
                 Copy
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem onClick={() => handleEdit(user)}>
                 <IoCreate className="mr-2 h-4 w-4" />
                 Edit

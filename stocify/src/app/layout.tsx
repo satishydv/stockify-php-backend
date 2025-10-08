@@ -12,7 +12,7 @@ const font = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Stockify",
+  title: "Inventory Management System",
   description: "Your stock managing partner",
 };
 

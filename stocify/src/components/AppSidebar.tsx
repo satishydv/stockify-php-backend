@@ -18,6 +18,11 @@ import {
   ShoppingCart,
   Percent,
   Building,
+  ArrowLeft,
+  Settings,
+  FileText,
+  TrendingUp,
+  DollarSign,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,7 +44,7 @@ import {
 } from "./ui/sidebar";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -56,6 +61,11 @@ import { apiClient } from "@/lib/api";
 
 const itemsBeforeSells = [
   {
+    title: "Setup",
+    url: "/dashboard/setup",
+    icon: Settings,
+  },
+  {
     title: "Home",
     url: "/",
     icon: Home,
@@ -69,6 +79,16 @@ const itemsBeforeSells = [
     title: "Users",
     url: "/dashboard/users",
     icon: Users,
+  },
+  {
+    title: "Branches",
+    url: "/dashboard/branches",
+    icon: Building,
+  },
+  {
+    title: "Taxes",
+    url: "/dashboard/taxes",
+    icon: Percent,
   },
   {
     title: "Suppliers",
@@ -90,29 +110,42 @@ const itemsBeforeSells = [
     url: "/dashboard/stocks",
     icon: Warehouse,
   },
-  {
-    title: "Branches",
-    url: "/dashboard/branches",
-    icon: Building,
-  },
+  
 ];
 
-const itemsAfterSells = [
+const reportsSubItems = [
   {
-    title: "Taxes",
-    url: "/dashboard/taxes",
-    icon: Percent,
+    title: "Sell Report",
+    url: "/dashboard/reports/sell-report",
+    icon: FileText,
   },
   {
-    title: "Reports",
-    url: "#",
-    icon: ChartBar,
+    title: "Vendor Report",
+    url: "/dashboard/reports/vendor-report",
+    icon: Truck,
+  },
+  {
+    title: "Loss/Profit",
+    url: "/dashboard/reports/loss-profit",
+    icon: TrendingUp,
+  },
+  {
+    title: "Return",
+    url: "/dashboard/reports/return",
+    icon: ArrowLeft,
   },
 ];
 
 const AppSidebar = () => {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const pathname = usePathname();
+
+  const isActive = (url: string) => {
+    if (!pathname) return false;
+    if (url === "/") return pathname === "/";
+    return pathname === url || pathname.startsWith(url + "/");
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -131,28 +164,47 @@ const AppSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar
+      collapsible="icon"
+      className="text-white"
+      style={{
+        // Override shadcn sidebar CSS variables for consistent coloring
+        ["--sidebar" as any]: "oklch(0.42 0.17 262)", // purple background
+        ["--sidebar-foreground" as any]: "oklch(0.985 0 0)", // white text
+        ["--sidebar-accent" as any]: "oklch(0.32 0.12 277)", // hover
+        ["--sidebar-accent-foreground" as any]: "oklch(0.985 0 0)",
+        ["--sidebar-border" as any]: "oklch(1 0 0 / 12%)",
+        ["--sidebar-ring" as any]: "oklch(0.56 0.18 277)",
+      }}
+    >
       <SidebarHeader className="py-4">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link href="/">
                 <Image src="/icon/icon.png" alt="logo" width={30} height={30} />
-                <span className="text-2xl font-bold text-yellow-500">Stockify</span>
+                <span className="text-2xl font-bold text-white">Inventory</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarSeparator />
+      <SidebarSeparator className="bg-white/20" />
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-white/80">Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {itemsBeforeSells.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton
+                    asChild
+                    className={`${
+                      isActive(item.url)
+                        ? "bg-white text-black rounded-full"
+                        : "text-white hover:bg-white/10"
+                    }`}
+                  >
                     <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -166,45 +218,89 @@ const AppSidebar = () => {
         
         {/* Sells Collapsible Section */}
         <Collapsible className="group/collapsible">
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger className="w-full">
-                <ShoppingCart />
-                Sells
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton className="text-white hover:bg-white/10">
+                  <ShoppingCart />
+                  <span>Sells</span>
+                  <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                </SidebarMenuButton>
               </CollapsibleTrigger>
-            </SidebarGroupLabel>
+            </SidebarMenuItem>
             <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-              <SidebarGroupContent className="py-0">
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/dashboard/create-order">
-                        <Plus />
-                        Create Sells
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/dashboard/orders">
-                        <List />
-                        Manage Sells
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className={`${
+                    isActive("/dashboard/create-order")
+                      ? "bg-white text-black rounded-full"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  <Link href="/dashboard/create-order">
+                    <Plus />
+                    Create Sells
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className={`${
+                    isActive("/dashboard/orders")
+                      ? "bg-white text-black rounded-full"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  <Link href="/dashboard/orders">
+                    <List />
+                    Manage Sells
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className={`${
+                    isActive("/dashboard/return-order")
+                      ? "bg-white text-black rounded-full"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  <Link href="/dashboard/return-order">
+                    <ArrowLeft />
+                    Return Sell
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </CollapsibleContent>
-          </SidebarGroup>
+          </SidebarMenu>
         </Collapsible>
         
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {itemsAfterSells.map((item) => (
+        {/* Reports Collapsible Section */}
+        <Collapsible className="group/collapsible">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton className="text-white hover:bg-white/10">
+                  <ChartBar />
+                  <span>Reports</span>
+                  <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+            </SidebarMenuItem>
+            <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+              {reportsSubItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton
+                    asChild
+                    className={`${
+                      isActive(item.url)
+                        ? "bg-white text-black rounded-full"
+                        : "text-white hover:bg-white/10"
+                    }`}
+                  >
                     <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -212,9 +308,9 @@ const AppSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+            </CollapsibleContent>
+          </SidebarMenu>
+        </Collapsible>
         
       </SidebarContent>
       <SidebarFooter>
@@ -222,13 +318,17 @@ const AppSidebar = () => {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
+                <SidebarMenuButton className="text-white hover:bg-white/10">
                   <User2 /> Admin <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>Account</DropdownMenuItem>
-                <DropdownMenuItem>Setting</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/change-pass">Change Password</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={handleLogout}
                   disabled={isLoggingOut}

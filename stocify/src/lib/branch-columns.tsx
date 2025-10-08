@@ -129,10 +129,10 @@ export const useBranchColumns = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleCopy(branch)}>
+              {/* <DropdownMenuItem onClick={() => handleCopy(branch)}>
                 <IoCopy className="mr-2 h-4 w-4" />
                 Copy
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem onClick={() => handleEdit(branch)}>
                 <IoCreate className="mr-2 h-4 w-4" />
                 Edit

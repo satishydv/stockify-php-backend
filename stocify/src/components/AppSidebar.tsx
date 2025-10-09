@@ -116,22 +116,22 @@ const itemsBeforeSells = [
 const reportsSubItems = [
   {
     title: "Sell Report",
-    url: "/dashboard/reports/sell-report",
+    url: "/dashboard/sells",
     icon: FileText,
   },
   {
     title: "Vendor Report",
-    url: "/dashboard/reports/vendor-report",
+    url: "/dashboard/vendor-report",
     icon: Truck,
   },
-  {
-    title: "Loss/Profit",
-    url: "/dashboard/reports/loss-profit",
-    icon: TrendingUp,
-  },
+  // {
+  //   title: "Loss/Profit",
+  //   url: "/dashboard/reports/loss-profit",
+  //   icon: TrendingUp,
+  // },
   {
     title: "Return",
-    url: "/dashboard/reports/return",
+    url: "/dashboard/return",
     icon: ArrowLeft,
   },
 ];

@@ -47,6 +47,7 @@ interface PaymentForm {
   paymentMethod: string
   transactionId: string
   paymentAttachment: File | null
+  status: string
 }
 
 export default function CreateOrderPage() {
@@ -68,7 +69,8 @@ export default function CreateOrderPage() {
   const [paymentForm, setPaymentForm] = useState<PaymentForm>({
     paymentMethod: "",
     transactionId: "",
-    paymentAttachment: null
+    paymentAttachment: null,
+    status: "in_progress"
   })
 
   // Fetch data on component mount
@@ -195,10 +197,10 @@ export default function CreateOrderPage() {
       formData.append('tax_rate', (parseFloat(selectedTax?.rate?.toString() || '0')).toFixed(2))
       formData.append('tax_amount', taxAmount.toFixed(2))
       formData.append('total_amount', grossAmount.toFixed(2))
-      // Status is set to 'fulfilled' by default in the backend
 
       // Append payment details
       formData.append('payment_method', paymentForm.paymentMethod)
+      formData.append('status', paymentForm.status)
       if (paymentForm.transactionId) {
         formData.append('transaction_id', paymentForm.transactionId)
       }
@@ -258,7 +260,8 @@ export default function CreateOrderPage() {
       setPaymentForm({
         paymentMethod: "",
         transactionId: "",
-        paymentAttachment: null
+        paymentAttachment: null,
+        status: "in_progress"
       })
       setIsPaymentDialogOpen(false)
 
@@ -328,7 +331,7 @@ export default function CreateOrderPage() {
                     <div className="flex items-center gap-3">
                       <div className="text-right">
                         <p className="font-medium text-gray-900">₹{product.sell_price}</p>
-                        <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
+                        <Badge variant={product.status === 'paid' ? 'default' : 'secondary'}>
                           {product.status}
                         </Badge>
                       </div>
@@ -630,6 +633,38 @@ export default function CreateOrderPage() {
                           <div className="flex items-center gap-2">
                             <IoCard className="w-4 h-4 text-orange-600" />
                             Cheque
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Order Status */}
+                  <div>
+                    <Label htmlFor="status" className="text-sm font-medium text-gray-700">
+                      Order Status *
+                    </Label>
+                    <Select value={paymentForm.status} onValueChange={(value) => handlePaymentFormChange('status', value)}>
+                      <SelectTrigger className="mt-1 w-full">
+                        <SelectValue placeholder="Choose order status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="in_progress">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                            In Progress
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="paid">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            Paid
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="due">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                            Due
                           </div>
                         </SelectItem>
                       </SelectContent>

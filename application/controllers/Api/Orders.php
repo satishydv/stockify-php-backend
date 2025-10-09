@@ -97,7 +97,7 @@ class Orders extends CI_Controller {
                 'tax_rate' => $this->input->post('tax_rate'),
                 'tax_amount' => $this->input->post('tax_amount'),
                 'total_amount' => $this->input->post('total_amount'),
-                'status' => 'fulfilled', // Set default status to fulfilled
+                'status' => $this->input->post('status') ?: 'in_progress', // Set status from form or default to in_progress
                 'payment_method' => $this->input->post('payment_method'),
                 'transaction_id' => $this->input->post('transaction_id'),
                 'payment_attachment' => $payment_attachment_path,
@@ -148,8 +148,10 @@ class Orders extends CI_Controller {
                     throw new Exception("Failed to create order items");
                 }
 
-                // Decrease stock quantities since order is fulfilled by default
-                $this->Order_model->decrease_stock_for_order($order_items_data);
+                // Decrease stock quantities only if status is 'paid'
+                if ($order_data['status'] === 'paid') {
+                    $this->Order_model->decrease_stock_for_order($order_items_data);
+                }
 
                 if ($this->db->trans_status() === FALSE) {
                     $this->db->trans_rollback();
@@ -393,9 +395,9 @@ class Orders extends CI_Controller {
                     throw new Exception("Failed to update order items");
                 }
 
-                // If status is fulfilled or shipped, decrease stock
+                // If status is paid, decrease stock
                 $final_status = $order_data['status'];
-                if (in_array($final_status, ['fulfilled', 'shipped'])) {
+                if ($final_status === 'paid') {
                     $this->Order_model->decrease_stock_for_order($order_items_data);
                 }
 

@@ -45,6 +45,10 @@ class Returns extends CI_Controller {
         }
 
         try {
+            // Debug: Log all POST data
+            log_message('debug', 'Return create - POST data: ' . print_r($this->input->post(), true));
+            log_message('debug', 'Payment method received: ' . $this->input->post('payment_method'));
+            
             // Generate unique return ID
             $return_id = 'RET' . date('Ymd') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
             
@@ -55,6 +59,7 @@ class Returns extends CI_Controller {
                 'customer_name' => $this->input->post('customer_name'),
                 'customer_phone' => $this->input->post('customer_phone'),
                 'return_date' => $this->input->post('return_date'),
+                'payment_method' => $this->input->post('payment_method') ?: null,
                 'total_return_amount' => $this->input->post('total_return_amount'),
                 'items' => $this->input->post('items'),
                 'status' => 'return',
@@ -62,6 +67,9 @@ class Returns extends CI_Controller {
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s')
             ];
+            
+            // Debug: Log return data before insertion
+            log_message('debug', 'Return data to insert: ' . print_r($return_data, true));
 
             // Create return
             $return_id_db = $this->Return_model->create_return($return_data);

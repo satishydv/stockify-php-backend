@@ -11,7 +11,7 @@ export type Product = {
   purchase_price: number
   sell_price: number
   category: string
-  status: "active" | "inactive" | "draft"
+  status: "paid" | "due" | "draft"
   quantityInStock: number
   supplier: string
   branch_name?: string
@@ -120,18 +120,18 @@ export const products: Product[] = [
 
 export const getStatusBadge = (status: Product["status"]) => {
   switch (status) {
-    case "active":
+    case "paid":
       return (
         <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
           <IoCheckmark className="w-3 h-3 mr-1" />
-          Active
+          Paid
         </Badge>
       )
-    case "inactive":
+    case "due":
       return (
         <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
           <IoCloseIcon className="w-3 h-3 mr-1" />
-          Inactive
+          Due
         </Badge>
       )
     case "draft":

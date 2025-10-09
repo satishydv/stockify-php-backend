@@ -87,6 +87,17 @@ const page = () => {
   const [returningOrder, setReturningOrder] = useState<Order | null>(null)
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
   const [returnItems, setReturnItems] = useState<OrderItem[]>([])
+  const [returnCustomerData, setReturnCustomerData] = useState<{
+    customer_name: string
+    customer_phone: string
+    return_date: string
+    payment_method: string
+  }>({
+    customer_name: '',
+    customer_phone: '',
+    return_date: new Date().toISOString().split('T')[0],
+    payment_method: ''
+  })
 
   // Fetch orders from API
   useEffect(() => {
@@ -336,6 +347,12 @@ const page = () => {
   const handleReturnOrder = (order: Order) => {
     setReturningOrder(order)
     setReturnItems([...order.items])
+    setReturnCustomerData({
+      customer_name: order.customer_name,
+      customer_phone: order.mobile_no,
+      return_date: new Date().toISOString().split('T')[0],
+      payment_method: order.payment_method
+    })
     setIsReturnDialogOpen(true)
   }
 
@@ -343,6 +360,12 @@ const page = () => {
     setIsReturnDialogOpen(false)
     setReturningOrder(null)
     setReturnItems([])
+    setReturnCustomerData({
+      customer_name: '',
+      customer_phone: '',
+      return_date: new Date().toISOString().split('T')[0],
+      payment_method: ''
+    })
   }
 
   const handleReturnItemChange = (itemId: number, field: keyof OrderItem, value: any) => {
@@ -357,6 +380,10 @@ const page = () => {
     setReturnItems(prevItems => prevItems.filter(item => item.id !== itemId))
   }
 
+  const handleReturnCustomerDataChange = (field: string, value: string) => {
+    setReturnCustomerData(prev => ({ ...prev, [field]: value }))
+  }
+
   const handleProcessReturn = async () => {
     if (!returningOrder) return
 
@@ -369,17 +396,23 @@ const page = () => {
         return
       }
 
-      // Calculate total return amount
-      const totalReturnAmount = itemsToReturn.reduce((sum, item) => {
+      // Calculate return amounts
+      const returnSubtotal = itemsToReturn.reduce((sum, item) => {
         return sum + (parseFloat(String(item.unit_price)) * item.quantity)
       }, 0)
+      
+      // Calculate tax for return (using original order's tax rate)
+      const originalTaxRate = parseFloat(String(returningOrder.tax_rate)) || 0
+      const returnTaxAmount = (returnSubtotal * originalTaxRate) / 100
+      const totalReturnAmount = returnSubtotal + returnTaxAmount
 
       // Prepare return data
       const returnData = {
         original_order_id: returningOrder.id,
-        customer_name: returningOrder.customer_name,
-        customer_phone: returningOrder.mobile_no,
-        return_date: new Date().toISOString().split('T')[0], // Today's date
+        customer_name: returnCustomerData.customer_name,
+        customer_phone: returnCustomerData.customer_phone,
+        return_date: returnCustomerData.return_date,
+        payment_method: returnCustomerData.payment_method,
         total_return_amount: totalReturnAmount.toFixed(2),
         items: itemsToReturn.map(item => ({
           product_id: item.product_id,
@@ -393,6 +426,15 @@ const page = () => {
       }
 
       console.log('Sending return data:', returnData)
+      console.log('Payment method being sent:', returnData.payment_method)
+
+      // Prepare form data
+      const formData = new URLSearchParams({
+        ...returnData,
+        items: JSON.stringify(returnData.items)
+      })
+      
+      console.log('Form data being sent:', formData.toString())
 
       // Call API to create return
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index.php/api/returns/create`, {
@@ -400,10 +442,7 @@ const page = () => {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          ...returnData,
-          items: JSON.stringify(returnData.items)
-        })
+        body: formData
       })
 
       const result = await response.json()
@@ -684,6 +723,8 @@ const page = () => {
         returnItems={returnItems}
         onReturnItemChange={handleReturnItemChange}
         onRemoveReturnItem={handleRemoveReturnItem}
+        returnCustomerData={returnCustomerData}
+        onReturnCustomerDataChange={handleReturnCustomerDataChange}
       />
     </div>
   )
@@ -867,7 +908,7 @@ const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClos
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <p className="font-medium text-gray-900">₹{product.sell_price}</p>
-                          <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
+                          <Badge variant={product.status === 'paid' ? 'default' : 'secondary'}>
                             {product.status}
                           </Badge>
                         </div>
@@ -1062,6 +1103,13 @@ interface ReturnOrderDialogProps {
   returnItems: OrderItem[]
   onReturnItemChange: (itemId: number, field: keyof OrderItem, value: any) => void
   onRemoveReturnItem: (itemId: number) => void
+  returnCustomerData: {
+    customer_name: string
+    customer_phone: string
+    return_date: string
+    payment_method: string
+  }
+  onReturnCustomerDataChange: (field: string, value: string) => void
 }
 
 const ReturnOrderDialog: React.FC<ReturnOrderDialogProps> = ({ 
@@ -1071,11 +1119,22 @@ const ReturnOrderDialog: React.FC<ReturnOrderDialogProps> = ({
   onProcessReturn,
   returnItems,
   onReturnItemChange,
-  onRemoveReturnItem
+  onRemoveReturnItem,
+  returnCustomerData,
+  onReturnCustomerDataChange
 }) => {
   if (!order) return null
 
   const formatCurrency = (value: number | string) => `₹${(parseFloat(String(value)) || 0).toFixed(2)}`
+
+  // Calculate return amounts dynamically
+  const returnSubtotal = returnItems.reduce((sum, item) => {
+    return sum + (parseFloat(String(item.unit_price)) * item.quantity)
+  }, 0)
+  
+  const returnTaxRate = parseFloat(String(order.tax_rate)) || 0
+  const returnTaxAmount = (returnSubtotal * returnTaxRate) / 100
+  const returnTotalAmount = returnSubtotal + returnTaxAmount
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -1145,25 +1204,25 @@ const ReturnOrderDialog: React.FC<ReturnOrderDialogProps> = ({
 
           {/* Right Side - Order Summary and Customer Details */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Order Summary */}
+            {/* Return Summary */}
             <Card>
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle>Return Summary</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span>{formatCurrency(order.subtotal)}</span>
+                    <span>{formatCurrency(returnSubtotal)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Tax ({(parseFloat(String(order.tax_rate)) || 0).toFixed(2)}%):</span>
-                    <span>{formatCurrency(order.tax_amount)}</span>
+                    <span>Tax ({returnTaxRate.toFixed(2)}%):</span>
+                    <span>{formatCurrency(returnTaxAmount)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
-                    <span>Total Amount:</span>
-                    <span>{formatCurrency(order.total_amount)}</span>
+                    <span>Total Return Amount:</span>
+                    <span>{formatCurrency(returnTotalAmount)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -1177,27 +1236,49 @@ const ReturnOrderDialog: React.FC<ReturnOrderDialogProps> = ({
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <Label>Customer Name</Label>
-                    <Input value={order.customer_name} disabled />
-                  </div>
-                  <div>
-                    <Label>Mobile No</Label>
-                    <Input value={order.mobile_no} disabled />
-                  </div>
-                  <div>
-                    <Label>Order Date</Label>
+                    <Label htmlFor="return_customer_name">Customer Name *</Label>
                     <Input 
-                      value={new Date(order.order_date).toLocaleDateString('en-GB', { 
-                        day: '2-digit', 
-                        month: 'short', 
-                        year: 'numeric' 
-                      })} 
-                      disabled 
+                      id="return_customer_name"
+                      value={returnCustomerData.customer_name}
+                      onChange={(e) => onReturnCustomerDataChange('customer_name', e.target.value)}
+                      placeholder="Enter customer name"
                     />
                   </div>
                   <div>
-                    <Label>Payment Method</Label>
-                    <Input value={order.payment_method} disabled />
+                    <Label htmlFor="return_customer_phone">Mobile No *</Label>
+                    <Input 
+                      id="return_customer_phone"
+                      value={returnCustomerData.customer_phone}
+                      onChange={(e) => onReturnCustomerDataChange('customer_phone', e.target.value)}
+                      placeholder="Enter mobile number"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="return_date">Return Date</Label>
+                    <Input 
+                      id="return_date"
+                      type="date"
+                      value={returnCustomerData.return_date}
+                      onChange={(e) => onReturnCustomerDataChange('return_date', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="return_payment_method">Payment Method</Label>
+                    <Select 
+                      value={returnCustomerData.payment_method} 
+                      onValueChange={(value) => onReturnCustomerDataChange('payment_method', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="card">Card</SelectItem>
+                        <SelectItem value="upi">UPI</SelectItem>
+                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                        <SelectItem value="cheque">Cheque</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>

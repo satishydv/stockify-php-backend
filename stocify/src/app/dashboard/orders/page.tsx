@@ -21,7 +21,8 @@ import {
   Edit,
   Plus,
   Minus,
-  ArrowLeft
+  ArrowLeft,
+  Download
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -46,6 +47,7 @@ import {
 } from "@/components/ui/select"
 import { useProductStore } from "@/stores/productStore"
 import { Product } from "@/lib/product-data"
+import { useCSVExport } from "@/lib/useCSVExport"
 
 interface OrderItem {
   id: number
@@ -59,6 +61,7 @@ interface OrderItem {
 
 interface Order {
   id: string
+  order_number: number
   customer_name: string
   mobile_no: string
   order_date: string
@@ -82,6 +85,7 @@ const page = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [sortBy, setSortBy] = useState("new")
+  const { exportToCSV, formatCurrency, formatDate, formatStatus } = useCSVExport()
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [returningOrder, setReturningOrder] = useState<Order | null>(null)
@@ -222,7 +226,25 @@ const page = () => {
     }
   }
 
-  const formatCurrency = (value: number | string) => `₹${(parseFloat(String(value)) || 0).toFixed(2)}`
+  const formatCurrencyDisplay = (value: number | string) => `₹${(parseFloat(String(value)) || 0).toFixed(2)}`
+
+  const handleExportCSV = () => {
+    const csvColumns = [
+      { key: 'order_number', label: 'Order #' },
+      { key: 'customer_name', label: 'Customer Name' },
+      { key: 'mobile_no', label: 'Mobile Number' },
+      { key: 'order_date', label: 'Order Date', formatter: formatDate },
+      { key: 'status', label: 'Status', formatter: formatStatus },
+      { key: 'payment_method', label: 'Payment Method' },
+      { key: 'subtotal', label: 'Subtotal', formatter: formatCurrency },
+      { key: 'tax_amount', label: 'Tax Amount', formatter: formatCurrency },
+      { key: 'total_amount', label: 'Total Amount', formatter: formatCurrency },
+      { key: 'transaction_id', label: 'Transaction ID' },
+      { key: 'created_at', label: 'Created Date', formatter: formatDate }
+    ]
+
+    exportToCSV(sortedOrders, 'orders.csv', csvColumns)
+  }
 
   const handlePrint = async (order: Order) => {
     const orderDate = new Date(order.order_date).toLocaleDateString('en-GB', {
@@ -251,8 +273,8 @@ const page = () => {
         <td style="padding:8px;border:1px solid #e5e7eb;">${it.product_name}</td>
         <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;">${it.product_sku}</td>
         <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${it.quantity}</td>
-        <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${formatCurrency(it.unit_price)}</td>
-        <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${formatCurrency(it.subtotal)}</td>
+                        <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${formatCurrencyDisplay(it.unit_price)}</td>
+                        <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${formatCurrencyDisplay(it.subtotal)}</td>
       </tr>
     `).join('')
 
@@ -290,7 +312,7 @@ const page = () => {
           </div>
           <div style="text-align:right" class="stack-y">
             <div class="title">Invoice</div>
-            <div class="muted">Invoice no.: <span style="color:#111827; font-weight:600;">${order.id}</span></div>
+            <div class="muted">Invoice no.: <span style="color:#111827; font-weight:600;">${order.order_number}</span></div>
             <div class="muted">Invoice date: <span style="color:#111827; font-weight:600;">${orderDate}</span></div>
             <div class="muted">Payment method: <span style="text-transform:capitalize; color:#111827; font-weight:600;">${order.payment_method}</span></div>
             <div class="muted">Customer: <span style="color:#111827; font-weight:600;">${order.customer_name}</span></div>
@@ -319,9 +341,9 @@ const page = () => {
           </table>
 
           <div class="totals">
-            <div class="totals-row"><span>Subtotal</span><span>${formatCurrency(order.subtotal)}</span></div>
-            <div class="totals-row"><span>Tax (${parseFloat(String(order.tax_rate)) || 0}% )</span><span>${formatCurrency(order.tax_amount)}</span></div>
-            <div class="totals-row bold"><span>Grand Total</span><span>${formatCurrency(order.total_amount)}</span></div>
+            <div class="totals-row"><span>Subtotal</span><span>${formatCurrencyDisplay(order.subtotal)}</span></div>
+            <div class="totals-row"><span>Tax (${parseFloat(String(order.tax_rate)) || 0}% )</span><span>${formatCurrencyDisplay(order.tax_amount)}</span></div>
+            <div class="totals-row bold"><span>Grand Total</span><span>${formatCurrencyDisplay(order.total_amount)}</span></div>
           </div>
         </div>
 
@@ -465,15 +487,12 @@ const page = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      'new': { label: 'New', variant: 'default' as const, color: 'bg-blue-100 text-blue-800' },
-      'in progress': { label: 'Processing', variant: 'secondary' as const, color: 'bg-yellow-100 text-yellow-800' },
-      'fulfilled': { label: 'Fulfilled', variant: 'secondary' as const, color: 'bg-green-100 text-green-800' },
-      'shipped': { label: 'Shipped', variant: 'secondary' as const, color: 'bg-purple-100 text-purple-800' },
-      'delivered': { label: 'Delivered', variant: 'secondary' as const, color: 'bg-green-100 text-green-800' },
-      'cancelled': { label: 'Cancelled', variant: 'destructive' as const, color: 'bg-red-100 text-red-800' }
+      'in_progress': { label: 'In Progress', variant: 'secondary' as const, color: 'bg-yellow-100 text-yellow-800' },
+      'paid': { label: 'Paid', variant: 'default' as const, color: 'bg-green-100 text-green-800' },
+      'due': { label: 'Due', variant: 'destructive' as const, color: 'bg-red-100 text-red-800' }
     }
     
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['new']
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['in_progress']
     return (
       <Badge className={config.color}>
         {config.label}
@@ -496,7 +515,7 @@ const page = () => {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.order_number.toString().includes(searchTerm.toLowerCase()) ||
                          order.status.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter
     return matchesSearch && matchesStatus
@@ -538,15 +557,15 @@ const page = () => {
 
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
+        <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Search by ID, name, status..."
+            placeholder="Search by order #, name, status..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
-          </div>
+        </div>
         
         <div className="flex gap-2">
           <DropdownMenu>
@@ -558,11 +577,9 @@ const page = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => setStatusFilter('all')}>All</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('new')}>New</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('in progress')}>Processing</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('shipped')}>Shipped</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('delivered')}>Delivered</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('cancelled')}>Cancelled</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('in_progress')}>In Progress</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('paid')}>Paid</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('due')}>Due</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -580,6 +597,15 @@ const page = () => {
               <DropdownMenuItem onClick={() => setSortBy('amount_low')}>Amount Low</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Button 
+            onClick={handleExportCSV}
+            className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2"
+            disabled={sortedOrders.length === 0}
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </Button>
         </div>
       </div>
 
@@ -615,7 +641,7 @@ const page = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold">Order ID: {order.id}</p>
+                    <p className="text-sm font-semibold">Order #: {order.order_number}</p>
                   </div>
                 </div>
 
@@ -869,7 +895,7 @@ const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClos
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="min-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-bold text-orange-500">Edit Order #{formData.id}</DialogTitle>
+          <DialogTitle className="text-3xl font-bold text-orange-500">Edit Order #{formData.order_number}</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -1067,6 +1093,34 @@ const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClos
                         </SelectContent>
                       </Select>
                     </div>
+                    <div>
+                      <Label htmlFor="status">Order Status</Label>
+                      <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select order status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="in_progress">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                              In Progress
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="paid">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              Paid
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="due">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                              Due
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1140,7 +1194,7 @@ const ReturnOrderDialog: React.FC<ReturnOrderDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="min-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-bold text-orange-500">Return Order #{order.id}</DialogTitle>
+          <DialogTitle className="text-3xl font-bold text-orange-500">Return Order #{order.order_number}</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">

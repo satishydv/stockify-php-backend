@@ -9,6 +9,9 @@ class Products extends CI_Controller {
         $this->load->model('Category_model');
         $this->load->model('Supplier_model');
         $this->load->model('Stock_model');
+        $this->load->library('upload');
+        $this->load->helper('file');
+        $this->load->helper('url');
     }
     
     public function index() {
@@ -74,7 +77,49 @@ class Products extends CI_Controller {
     }
     
     public function create() {
-        $input = json_decode($this->input->raw_input_stream, true);
+        // Handle both JSON and FormData requests
+        $receipt_url = null;
+        
+        // Prefer POST array (works for both x-www-form-urlencoded and multipart/form-data)
+        $input = $this->input->post();
+        if (empty($input)) {
+            // Fallback to raw JSON body
+            $input = json_decode($this->input->raw_input_stream, true) ?: [];
+        }
+        
+        // If receipt_url sent directly (e.g., after first upload), honor it
+        if (isset($input['receipt_url']) && !empty($input['receipt_url'])) {
+            $receipt_url = $input['receipt_url'];
+        }
+        
+        // Handle file upload if provided in this request
+        if (!empty($_FILES['receipt']['name'])) {
+            $upload_path = FCPATH . 'public/products/';
+            if (!is_dir($upload_path)) {
+                mkdir($upload_path, 0755, true);
+            }
+            
+            $config['upload_path'] = $upload_path;
+            $config['allowed_types'] = 'jpg|jpeg|png|gif|pdf';
+            $config['max_size'] = 10240; // 10MB
+            $config['file_name'] = 'receipt_' . (isset($input['sku']) ? $input['sku'] : 'na') . '_' . time();
+            $config['overwrite'] = false;
+            
+            $this->upload->initialize($config);
+            
+            if ($this->upload->do_upload('receipt')) {
+                $upload_data = $this->upload->data();
+                $receipt_url = 'public/products/' . $upload_data['file_name'];
+            } else {
+                $this->output
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'error' => 'File upload failed: ' . $this->upload->display_errors()
+                    ]));
+                return;
+            }
+        }
         
         // Validate required fields
         $required_fields = ['name', 'sku', 'purchase_price', 'sell_price', 'category', 'supplier', 'quantityInStock'];
@@ -112,6 +157,8 @@ class Products extends CI_Controller {
             'status' => isset($input['status']) ? $input['status'] : 'paid',
             'quantityInStock' => $input['quantityInStock'],
             'branch_name' => isset($input['branch_name']) ? $input['branch_name'] : null,
+            'payment_method' => isset($input['payment_method']) ? $input['payment_method'] : null,
+            'receipt_url' => $receipt_url,
             'minimumStockLevel' => isset($input['minimumStockLevel']) ? $input['minimumStockLevel'] : 10,
             'maximumStockLevel' => isset($input['maximumStockLevel']) ? $input['maximumStockLevel'] : 1000
         ];
@@ -275,4 +322,5 @@ class Products extends CI_Controller {
                 ]));
         }
     }
+    
 }

@@ -61,14 +61,14 @@ import { apiClient } from "@/lib/api";
 
 const itemsBeforeSells = [
   {
-    title: "Setup",
-    url: "/dashboard/setup",
-    icon: Settings,
-  },
-  {
     title: "Home",
     url: "/",
     icon: Home,
+  },
+  {
+    title: "Setup",
+    url: "/dashboard/setup",
+    icon: Settings,
   },
   {
     title: "Roles",

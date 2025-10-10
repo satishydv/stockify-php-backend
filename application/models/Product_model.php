@@ -26,6 +26,8 @@ class Product_model extends CI_Model {
                 'quantityInStock' => (int)$product['quantity_in_stock'],
                 'supplier' => $product['supplier'],
                 'branch_name' => $product['branch_name'],
+                'payment_method' => $product['payment_method'],
+                'receipt_url' => $product['receipt_url'],
                 'minimumStockLevel' => 10, // Default value since column doesn't exist
                 'maximumStockLevel' => 1000, // Default value since column doesn't exist
                 'lastUpdated' => $product['updated_at'],
@@ -52,6 +54,8 @@ class Product_model extends CI_Model {
                 'quantityInStock' => (int)$product['quantity_in_stock'],
                 'supplier' => $product['supplier'],
                 'branch_name' => $product['branch_name'],
+                'payment_method' => $product['payment_method'],
+                'receipt_url' => $product['receipt_url'],
                 'minimumStockLevel' => 10, // Default value since column doesn't exist
                 'maximumStockLevel' => 1000, // Default value since column doesn't exist
                 'lastUpdated' => $product['updated_at'],
@@ -80,6 +84,8 @@ class Product_model extends CI_Model {
             'status' => $data['status'],
             'quantity_in_stock' => $data['quantityInStock'],
             'branch_name' => isset($data['branch_name']) ? $data['branch_name'] : null,
+            'payment_method' => isset($data['payment_method']) ? $data['payment_method'] : null,
+            'receipt_url' => isset($data['receipt_url']) ? $data['receipt_url'] : null,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
         ];
@@ -118,6 +124,12 @@ class Product_model extends CI_Model {
         }
         if (isset($data['branch_name'])) {
             $update_data['branch_name'] = $data['branch_name'];
+        }
+        if (isset($data['payment_method'])) {
+            $update_data['payment_method'] = $data['payment_method'];
+        }
+        if (isset($data['receipt_url'])) {
+            $update_data['receipt_url'] = $data['receipt_url'];
         }
         
         $update_data['updated_at'] = date('Y-m-d H:i:s');

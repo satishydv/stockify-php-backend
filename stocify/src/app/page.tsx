@@ -148,7 +148,7 @@ function LoginPage() {
             className="rounded-sm"
           />
         </div>
-        <span className="text-3xl font-bold text-gray-900 dark:text-yellow-500">Stockify</span>
+        <span className="text-3xl font-bold text-gray-900 dark:text-yellow-500">Inventory</span>
       </div>
     
     <div className='flex flex-col gap-6'>
@@ -287,10 +287,10 @@ function LoginPage() {
     <div
     className='mx-auto hidden md:block '>
       <Image 
-      src="/login/login.webp"
+      src="/login/login.png"
       alt="Hero Image"
-      width={800}
-      height={800}
+      width={600}
+      height={500}
       className='rounded-lg'
       />
     </div>

@@ -10,15 +10,15 @@ import { useFilterStore } from "@/stores/filterStore"
 // Status options constant
 const STATUS_OPTIONS = [
   {
-    id: 'published',
-    label: 'Published',
+    id: 'paid',
+    label: 'Paid',
     icon: IoCheckmark,
     color: 'bg-green-100 text-green-700',
     iconColor: 'text-green-600'
   },
   {
-    id: 'inactive',
-    label: 'Inactive',
+    id: 'due',
+    label: 'Due',
     icon: IoCloseIcon,
     color: 'bg-red-100 text-red-700',
     iconColor: 'text-red-600'

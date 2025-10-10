@@ -15,38 +15,61 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useProductStore } from "@/stores/productStore"
 import { useCategoryStore } from "@/stores/categoryStore"
 import { useSupplierStore } from "@/stores/supplierStore"
 import { useBranchStore } from "@/stores/branchStore"
+import { Plus, X } from "lucide-react"
+import { IoCash, IoCard, IoWallet, IoCloudUpload } from "react-icons/io5"
 
-interface ProductFormData {
+interface ProductItem {
   name: string
   sku: string
-  purchase_price: string
-  sell_price: string
-  category: string
-  status: "paid" | "due" | "draft"
   quantity: string
+  sell_price: string
+  purchase_price: string
+  net_purchase_price: string
+}
+
+interface ProductFormData {
   supplier: string
+  category: string
   branch_name: string
+  products: ProductItem[]
+  status: "draft" | "paid" | "due"
+  payment_method: string
+  receipt_file: File | null
+}
+
+const initialProductItem: ProductItem = {
+  name: "",
+  sku: "",
+  quantity: "",
+  sell_price: "",
+  purchase_price: "",
+  net_purchase_price: ""
 }
 
 const initialFormData: ProductFormData = {
-  name: "",
-  sku: "",
-  purchase_price: "",
-  sell_price: "",
-  category: "",
-  status: "paid",
-  quantity: "",
   supplier: "",
-  branch_name: ""
+  category: "",
+  branch_name: "",
+  products: [initialProductItem],
+  status: "draft",
+  payment_method: "",
+  receipt_file: null
 }
 
 export default function ProductDialog() {
   const [formData, setFormData] = useState<ProductFormData>(initialFormData)
-  const [errors, setErrors] = useState<Partial<ProductFormData>>({})
+  const [errors, setErrors] = useState<any>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const addProduct = useProductStore((state) => state.addProduct)
   const { categories, fetchCategories } = useCategoryStore()
@@ -61,23 +84,87 @@ export default function ProductDialog() {
   }, [fetchCategories, fetchSuppliers, fetchBranches])
 
   const handleInputChange = (field: keyof ProductFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev: ProductFormData) => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }))
+      setErrors((prev: any) => ({ ...prev, [field]: undefined }))
+    }
+  }
+
+  const calculateNetPurchasePrice = (quantity: string, purchasePrice: string): string => {
+    const qty = parseFloat(quantity) || 0
+    const price = parseFloat(purchasePrice) || 0
+    return (qty * price).toFixed(2)
+  }
+
+  const handleProductChange = (index: number, field: keyof ProductItem, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      products: prev.products.map((product, i) => {
+        if (i === index) {
+          const updatedProduct = { ...product, [field]: value }
+          
+          // Auto-calculate net purchase price when quantity or purchase_price changes
+          if (field === 'quantity' || field === 'purchase_price') {
+            updatedProduct.net_purchase_price = calculateNetPurchasePrice(
+              field === 'quantity' ? value : product.quantity,
+              field === 'purchase_price' ? value : product.purchase_price
+            )
+          }
+          
+          return updatedProduct
+        }
+        return product
+      })
+    }))
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null
+    setFormData(prev => ({ ...prev, receipt_file: file }))
+  }
+
+  const addProductRow = () => {
+    setFormData(prev => ({
+      ...prev,
+      products: [...prev.products, { ...initialProductItem }]
+    }))
+  }
+
+  const removeProductRow = (index: number) => {
+    if (formData.products.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        products: prev.products.filter((_, i) => i !== index)
+      }))
     }
   }
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<ProductFormData> = {}
+    const newErrors: any = {}
     
-    if (!formData.name.trim()) newErrors.name = "The product name is required"
-    if (!formData.sku.trim()) newErrors.sku = "The SKU ref is required"
-    if (!formData.purchase_price.trim()) newErrors.purchase_price = "The Purchase Price is required"
-    if (!formData.sell_price.trim()) newErrors.sell_price = "The Sell Price is required"
-    if (!formData.quantity.trim()) newErrors.quantity = "The quantity is required"
     if (!formData.supplier.trim()) newErrors.supplier = "Supplier's name is required"
     if (!formData.category.trim()) newErrors.category = "Product category is required"
+    if (!formData.status.trim()) newErrors.status = "Product status is required"
+    
+    // Validate each product
+    formData.products.forEach((product, index) => {
+      if (!product.name.trim()) {
+        newErrors[`product_${index}_name`] = "Product name is required"
+      }
+      if (!product.sku.trim()) {
+        newErrors[`product_${index}_sku`] = "SKU is required"
+      }
+      if (!product.quantity.trim()) {
+        newErrors[`product_${index}_quantity`] = "Quantity is required"
+      }
+      if (!product.purchase_price.trim()) {
+        newErrors[`product_${index}_purchase_price`] = "Purchase price is required"
+      }
+      if (!product.sell_price.trim()) {
+        newErrors[`product_${index}_sell_price`] = "Sell price is required"
+      }
+    })
     
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -87,18 +174,50 @@ export default function ProductDialog() {
     if (validateForm()) {
       setIsSubmitting(true)
       try {
-        await addProduct({
-          name: formData.name,
-          sku: formData.sku,
-          purchase_price: parseFloat(formData.purchase_price),
-          sell_price: parseFloat(formData.sell_price),
-          category: formData.category,
-          status: formData.status,
-          quantityInStock: parseInt(formData.quantity),
-          supplier: formData.supplier,
-          branch_name: formData.branch_name || undefined,
-          icon: "📦" // Default icon for new products
-        })
+        // Create products for each item in the products array
+        // Strategy: upload receipt with first product, capture returned receipt_url,
+        // reuse same receipt_url for all subsequent products (no re-upload).
+        let sharedReceiptUrl: string | null = null
+        for (let i = 0; i < formData.products.length; i++) {
+          const product = formData.products[i]
+          const productFormData = new FormData()
+
+          productFormData.append('name', product.name)
+          productFormData.append('sku', product.sku)
+          productFormData.append('purchase_price', product.purchase_price)
+          productFormData.append('sell_price', product.sell_price)
+          productFormData.append('category', formData.category)
+          productFormData.append('status', formData.status)
+          productFormData.append('quantityInStock', product.quantity)
+          productFormData.append('supplier', formData.supplier)
+          if (formData.branch_name) productFormData.append('branch_name', formData.branch_name)
+          if (formData.payment_method) productFormData.append('payment_method', formData.payment_method)
+
+          // First product: attach file if present; others: pass receipt_url
+          if (i === 0) {
+            if (formData.receipt_file) productFormData.append('receipt', formData.receipt_file)
+          } else if (sharedReceiptUrl) {
+            productFormData.append('receipt_url', sharedReceiptUrl)
+          }
+
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index.php/api/products`, {
+            method: 'POST',
+            body: productFormData
+          })
+
+          if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(errorText || 'Failed to create product')
+          }
+
+          const result = await response.json()
+          console.log('Product created:', result)
+          // Capture receipt_url from first response if available
+          if (i === 0) {
+            const created = result?.product
+            if (created?.receipt_url) sharedReceiptUrl = created.receipt_url
+          }
+        }
         
         // Reset form after successful submission
         setFormData(initialFormData)
@@ -108,7 +227,7 @@ export default function ProductDialog() {
         window.location.reload() // Temporary solution to refresh the page
       } catch (error) {
         console.error('Error creating product:', error)
-        setErrors({ name: 'Failed to create product. Please try again.' })
+        setErrors({ supplier: 'Failed to create product. Please try again.' })
       } finally {
         setIsSubmitting(false)
       }
@@ -121,7 +240,7 @@ export default function ProductDialog() {
       <DialogTrigger asChild>
         <Button className="h-10">Add Product</Button>
       </DialogTrigger>
-      <DialogContent className="p-7 px-8 poppins min-w-6xl min-h-[600px]">
+      <DialogContent className="p-7 px-8 poppins min-w-6xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-[22px]">Add Product</DialogTitle>
           <DialogDescription>
@@ -130,56 +249,11 @@ export default function ProductDialog() {
         </DialogHeader>
         <Separator />
         
-        <div className="flex flex-col gap-2 mt-1">
-          {/* First row: Product Name and SKU */}
-          <div className="grid grid-cols-2 gap-7">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="product-name">Product's Name</Label>
-              <div className="relative">
-                <Input
-                  id="product-name"
-                  placeholder="Laptop..."
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  className={errors.name ? "border-red-500" : ""}
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1 h-8 w-8 p-0"
-                >
-                  📖
-                </Button>
-              </div>
-              {errors.name && (
-                <div className="flex items-center gap-1 text-red-500 text-sm">
-                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                  {errors.name}
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="sku">SKU</Label>
-              <Input
-                id="sku"
-                placeholder="ABC001"
-                value={formData.sku}
-                onChange={(e) => handleInputChange("sku", e.target.value)}
-                className={errors.sku ? "border-red-500" : ""}
-              />
-              {errors.sku && (
-                <div className="flex items-center gap-1 text-red-500 text-sm">
-                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                  {errors.sku}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Second row: Supplier and Category */}
-          <div className="grid grid-cols-2 gap-5 items-center mt-3">
-            <div className="flex flex-col gap-2">
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col gap-4 mt-1">
+          {/* First row: Supplier, Category, Branch */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex flex-col gap-2 px-1">
               <Label htmlFor="supplier">Supplier's name</Label>
               <select
                 id="supplier"
@@ -228,10 +302,7 @@ export default function ProductDialog() {
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Branch selection row */}
-          <div className="mt-3">
             <div className="flex flex-col gap-2">
               <Label htmlFor="branch_name">Branch</Label>
               <select
@@ -252,81 +323,287 @@ export default function ProductDialog() {
             </div>
           </div>
 
-          {/* Third row: Status, Quantity, Purchase Price, and Sell Price */}
-          <div className="mt-3 grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-lg:gap-1 max-sm:grid-cols-1">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="status">Status</Label>
-              <select
-                id="status"
-                value={formData.status}
-                onChange={(e) => handleInputChange("status", e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          {/* Product Items Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Products</h3>
+              <Button
+                type="button"
+                onClick={addProductRow}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
               >
-                <option value="paid">Paid</option>
-                <option value="due">Due</option>
-                <option value="draft">Draft</option>
-              </select>
+                <Plus className="h-4 w-4" />
+                Add Product
+              </Button>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="quantity">Quantity</Label>
-              <Input
-                id="quantity"
-                type="number"
-                placeholder="34"
-                value={formData.quantity}
-                onChange={(e) => handleInputChange("quantity", e.target.value)}
-                className={errors.quantity ? "border-red-500" : ""}
-              />
-              {errors.quantity && (
-                <div className="flex items-center gap-1 text-red-500 text-sm">
-                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                  {errors.quantity}
+            {/* Product Items Table */}
+            <div className="border rounded-lg overflow-hidden">
+              {/* Table Header */}
+              <div className="grid grid-cols-7 gap-4 p-3 bg-gray-50 border-b font-medium text-sm">
+                <div>Product</div>
+                <div>SKU</div>
+                <div>Qty</div>
+                <div>Purchase Price</div>
+                <div>Net Purchase Price</div>
+                <div>Sell Price</div>
+                <div className="text-center">Actions</div>
+              </div>
+
+              {/* Product Rows */}
+              {formData.products.map((product, index) => (
+                <div key={index} className="grid grid-cols-7 gap-4 p-3 border-b last:border-b-0">
+                  <div className="flex flex-col gap-1">
+                    <Input
+                      placeholder="Product name..."
+                      value={product.name}
+                      onChange={(e) => handleProductChange(index, "name", e.target.value)}
+                      className={errors[`product_${index}_name`] ? "border-red-500" : ""}
+                    />
+                    {errors[`product_${index}_name`] && (
+                      <div className="text-xs text-red-500">
+                        {errors[`product_${index}_name`]}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Input
+                      placeholder="SKU..."
+                      value={product.sku}
+                      onChange={(e) => handleProductChange(index, "sku", e.target.value)}
+                      className={errors[`product_${index}_sku`] ? "border-red-500" : ""}
+                    />
+                    {errors[`product_${index}_sku`] && (
+                      <div className="text-xs text-red-500">
+                        {errors[`product_${index}_sku`]}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={product.quantity}
+                      onChange={(e) => handleProductChange(index, "quantity", e.target.value)}
+                      className={errors[`product_${index}_quantity`] ? "border-red-500" : ""}
+                    />
+                    {errors[`product_${index}_quantity`] && (
+                      <div className="text-xs text-red-500">
+                        {errors[`product_${index}_quantity`]}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={product.purchase_price}
+                      onChange={(e) => handleProductChange(index, "purchase_price", e.target.value)}
+                      className={errors[`product_${index}_purchase_price`] ? "border-red-500" : ""}
+                    />
+                    {errors[`product_${index}_purchase_price`] && (
+                      <div className="text-xs text-red-500">
+                        {errors[`product_${index}_purchase_price`]}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={product.net_purchase_price}
+                      readOnly
+                      className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                    />
+                    <div className="text-xs text-gray-500">
+                      Auto-calculated
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={product.sell_price}
+                      onChange={(e) => handleProductChange(index, "sell_price", e.target.value)}
+                      className={errors[`product_${index}_sell_price`] ? "border-red-500" : ""}
+                    />
+                    {errors[`product_${index}_sell_price`] && (
+                      <div className="text-xs text-red-500">
+                        {errors[`product_${index}_sell_price`]}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-center">
+                    <Button
+                      type="button"
+                      onClick={() => removeProductRow(index)}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                      disabled={formData.products.length === 1}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="purchase_price">Purchase Price</Label>
-              <Input
-                id="purchase_price"
-                type="number"
-                step="0.01"
-                placeholder="0"
-                value={formData.purchase_price}
-                onChange={(e) => handleInputChange("purchase_price", e.target.value)}
-                className={errors.purchase_price ? "border-red-500" : ""}
-              />
-              {errors.purchase_price && (
-                <div className="flex items-center gap-1 text-red-500 text-sm">
-                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                  {errors.purchase_price}
+            {/* Calculation Row */}
+            {/* <div className="border-t bg-gray-50">
+              <div className="grid grid-cols-7 gap-4 p-3">
+                <div className="col-span-5 font-medium text-sm text-gray-700">Product Totals:</div>
+                <div className="text-sm text-gray-600">
+                  {formData.products.map((product, index) => {
+                    const total = (parseFloat(product.purchase_price) || 0) * (parseInt(product.quantity) || 0)
+                    return (
+                      <div key={index} className="text-right">
+                        {product.name ? `₹${total.toFixed(2)}` : '₹0.00'}
+                      </div>
+                    )
+                  })}
                 </div>
-              )}
+                <div></div>
+              </div>
+            </div> */}
+
+            {/* Subtotal Row */}
+            <div className="border-t bg-blue-50">
+              <div className="grid grid-cols-7 gap-4 p-3">
+                <div className="col-span-5 font-semibold text-sm text-gray-800">Subtotal:</div>
+                <div className="text-sm font-semibold text-gray-800 text-right">
+                  ₹{formData.products.reduce((sum, product) => {
+                    const total = (parseFloat(product.purchase_price) || 0) * (parseInt(product.quantity) || 0)
+                    return sum + total
+                  }, 0).toFixed(2)}
+                </div>
+                <div></div>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="sell_price">Sell Price</Label>
-              <Input
-                id="sell_price"
-                type="number"
-                step="0.01"
-                placeholder="0"
-                value={formData.sell_price}
-                onChange={(e) => handleInputChange("sell_price", e.target.value)}
-                className={errors.sell_price ? "border-red-500" : ""}
-              />
-              {errors.sell_price && (
-                <div className="flex items-center gap-1 text-red-500 text-sm">
-                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                  {errors.sell_price}
+            {/* Status, Payment Method, and Receipt Section */}
+            <div className="mt-4">
+              <div className="grid grid-cols-3 gap-4">
+                {/* Product Status */}
+                <div>
+                  <Label htmlFor="status" className="text-sm font-medium text-gray-700">
+                    Product Status *
+                  </Label>
+                  <Select value={formData.status} onValueChange={(value: "draft" | "paid" | "due") => handleInputChange('status', value)}>
+                    <SelectTrigger className="mt-1 w-full">
+                      <SelectValue placeholder="Choose product status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          Draft
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="paid">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          Paid
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="due">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          Due
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.status && <div className="text-xs text-red-500 mt-1">{errors.status}</div>}
                 </div>
-              )}
+
+                {/* Receipt Upload (single for all products) */}
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">
+                    Payment Receipt (Optional)
+                  </Label>
+                  <div className="mt-1">
+                    <Input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={handleFileUpload}
+                      className="h-8 text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {formData.receipt_file && (
+                      <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                        <IoCloudUpload className="w-3 h-3" />
+                        {formData.receipt_file.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Payment Method (single for all products) */}
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">
+                    Payment Method
+                  </Label>
+                  <div className="mt-1">
+                    <Select 
+                      value={formData.payment_method} 
+                      onValueChange={(value) => handleInputChange('payment_method', value)}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cash">
+                          <div className="flex items-center gap-2">
+                            <IoCash className="w-3 h-3 text-green-600" />
+                            Cash
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="card">
+                          <div className="flex items-center gap-2">
+                            <IoCard className="w-3 h-3 text-blue-600" />
+                            Card
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="upi">
+                          <div className="flex items-center gap-2">
+                            <IoWallet className="w-3 h-3 text-purple-600" />
+                            UPI
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="bank_transfer">
+                          <div className="flex items-center gap-2">
+                            <IoCard className="w-3 h-3 text-indigo-600" />
+                            Bank Transfer
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="cheque">
+                          <div className="flex items-center gap-2">
+                            <IoCard className="w-3 h-3 text-orange-600" />
+                            Cheque
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+        </div>
 
-        <DialogFooter className="mt-9 mb-4 flex items-center gap-4">
+        <DialogFooter className="mt-4 mb-0 flex items-center gap-4 flex-shrink-0">
           <DialogClose asChild>
             <Button variant="secondary" className="h-11 px-11" disabled={isSubmitting}>
               Cancel

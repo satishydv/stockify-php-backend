@@ -1,6 +1,7 @@
 -- Orders table structure
 CREATE TABLE `orders` (
   `id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `order_number` int(11) NOT NULL AUTO_INCREMENT,
   `order_date` date DEFAULT NULL,
   `supplier` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `category` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -11,5 +12,6 @@ CREATE TABLE `orders` (
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `sku` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `customer_address` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `order_number` (`order_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

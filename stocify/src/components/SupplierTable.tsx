@@ -51,14 +51,14 @@ export function SupplierTable() {
             placeholder="Search by name, email, or category..." 
             className="max-w-sm h-10"
           />
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <Button variant="outline" size="sm">
               Category
             </Button>
             <Button variant="outline" size="sm">
               Status
             </Button>
-          </div>
+          </div> */}
         </div>
         {/* filter area */}
         <FilterArea />

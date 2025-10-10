@@ -17,6 +17,8 @@ export type Product = {
   branch_name?: string
   icon: string
   createdAt?: string
+  payment_method?: string
+  receipt_url?: string
 }
 
 export const products: Product[] = [

@@ -4,6 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { apiClient } from "@/lib/api";
 import { 
   IoPerson, 
   IoMail, 
@@ -29,9 +34,13 @@ interface ExtendedUser {
 }
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, checkAuth } = useAuth();
   const [extendedUser, setExtendedUser] = useState<ExtendedUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", address: "" });
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; email?: string; address?: string }>({});
 
   useEffect(() => {
     if (user && isAuthenticated) {
@@ -49,6 +58,11 @@ export default function ProfilePage() {
         updatedAt: (user as any).updatedAt || new Date().toISOString()
       };
       setExtendedUser(extendedUserData);
+      setForm({
+        name: extendedUserData.name || "",
+        email: extendedUserData.email || "",
+        address: extendedUserData.address || ""
+      });
       setLoading(false);
     }
   }, [user, isAuthenticated]);
@@ -81,6 +95,51 @@ export default function ProfilePage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleChange = (field: keyof typeof form, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
+  };
+
+  const validate = () => {
+    const next: { name?: string; email?: string; address?: string } = {};
+    if (!form.name.trim()) next.name = "Name is required";
+    if (!form.email.trim()) next.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) next.email = "Enter a valid email";
+    // address optional, but keep field present
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!extendedUser) return;
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      await apiClient.updateUser(String(extendedUser.id), {
+        name: form.name,
+        email: form.email,
+        address: form.address
+      });
+
+      const updated: ExtendedUser = {
+        ...extendedUser,
+        name: form.name,
+        email: form.email,
+        address: form.address,
+        updatedAt: new Date().toISOString()
+      };
+      setExtendedUser(updated);
+      setIsEditOpen(false);
+      // refresh auth user data
+      checkAuth();
+    } catch (e) {
+      // naive inline error; keep UX simple
+      setErrors(prev => ({ ...prev, email: "Failed to update. Please try again." }));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -169,11 +228,11 @@ export default function ProfilePage() {
                     <p className="text-gray-600">View your account details and information</p>
                   </div>
                   
-                  {/* Edit Profile Button - Inactive as requested */}
+                  {/* Edit Profile Button */}
                   <Button 
                     variant="outline" 
-                    className="border-gray-300 text-gray-500 cursor-not-allowed opacity-50"
-                    disabled
+                    className="border-gray-300 text-gray-700"
+                    onClick={() => setIsEditOpen(true)}
                   >
                     <IoPencil className="w-4 h-4 mr-2" />
                     Edit Profile
@@ -250,6 +309,43 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="p-7 px-8 poppins min-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-[22px]">Edit Profile</DialogTitle>
+            <DialogDescription>Update your profile information.</DialogDescription>
+          </DialogHeader>
+          <Separator />
+
+          <div className="flex flex-col gap-3 mt-2">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="profile-name">Name</Label>
+                <Input id="profile-name" value={form.name} onChange={(e) => handleChange("name", e.target.value)} className={errors.name ? "border-red-500" : ""} />
+                {errors.name && <div className="text-red-500 text-sm">{errors.name}</div>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="profile-email">Email Address</Label>
+                <Input id="profile-email" type="email" value={form.email} onChange={(e) => handleChange("email", e.target.value)} className={errors.email ? "border-red-500" : ""} />
+                {errors.email && <div className="text-red-500 text-sm">{errors.email}</div>}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="profile-address">Address</Label>
+              <Input id="profile-address" value={form.address} onChange={(e) => handleChange("address", e.target.value)} className={errors.address ? "border-red-500" : ""} />
+              {errors.address && <div className="text-red-500 text-sm">{errors.address}</div>}
+            </div>
+          </div>
+
+          <DialogFooter className="mt-6">
+            <Button variant="secondary" onClick={() => setIsEditOpen(false)} className="h-11 px-9">Cancel</Button>
+            <Button onClick={handleSave} disabled={saving} className="h-11 px-9 bg-orange-600 hover:bg-orange-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

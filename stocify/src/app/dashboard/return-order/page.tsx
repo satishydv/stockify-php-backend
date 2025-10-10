@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Download } from "lucide-react"
+import { Download, Printer } from "lucide-react"
 import { useCSVExport } from "@/lib/useCSVExport"
 
 interface ReturnItem {
@@ -68,6 +68,114 @@ const ReturnOrderPage = () => {
 
 
   const formatCurrencyDisplay = (value: number | string) => `₹${(parseFloat(String(value)) || 0).toFixed(2)}`
+
+  const handlePrintReturn = (ret: Return) => {
+    const items: ReturnItem[] = (() => {
+      try { return JSON.parse(ret.items || '[]') as ReturnItem[] } catch { return [] }
+    })()
+
+    const formatINR = (v: number | string) => `₹${(parseFloat(String(v)) || 0).toFixed(2)}`
+    const dateStr = new Date(ret.return_date).toISOString()
+    const dateDisplay = new Date(ret.return_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+
+    const rowsHtml = items.map(it => `
+      <tr>
+        <td>${it.product_name} <span style="color:#6B7280">(${it.product_sku})</span></td>
+        <td class="right">${it.return_quantity}</td>
+        <td class="right">${formatINR(it.unit_price)}</td>
+        <td class="right">${formatINR(it.subtotal)}</td>
+      </tr>
+    `).join('')
+
+    const html = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Return Bill - ${ret.return_id}</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Arial, Helvetica, sans-serif; margin: 20px; color: #333; }
+      .header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 20px; border-bottom:2px solid #333; padding-bottom:10px; }
+      .title { font-size: 24px; font-weight: 700; }
+      .meta { color:#666; font-size: 14px; }
+      .grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+      .card { border:1px solid #ddd; border-radius:8px; padding:16px; }
+      table { width:100%; border-collapse:collapse; margin-top: 12px; }
+      th, td { padding: 10px; border-bottom:1px solid #e5e7eb; font-size: 14px; }
+      th { background:#f5f5f5; text-align:left; }
+      .right { text-align:right; }
+      .totals { display:flex; justify-content:flex-end; margin-top: 12px; }
+      .totals .box { min-width: 300px; }
+      .total-row { font-weight: bold; }
+      @media print { .no-print { display:none; } body { margin:0; } }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="title">RETURN BILL</div>
+      <div class="meta">Generated: ${new Date(dateStr).toLocaleDateString('en-GB')}</div>
+    </div>
+    <div class="card">
+      <div class="grid">
+        <div>
+          <div><strong>Return ID:</strong> #${ret.return_id}</div>
+          <div class="meta">Date: ${dateDisplay}</div>
+        </div>
+        <div>
+          <div><strong>Customer:</strong> ${ret.customer_name || '-'}</div>
+          <div class="meta">Phone: ${ret.customer_phone || '-'}</div>
+        </div>
+        <div>
+          <div><strong>Original Order:</strong> #${ret.original_order_id || '-'}</div>
+          <div class="meta">Status: ${ret.status || '-'}</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="right">Qty</th>
+            <th class="right">Unit Price</th>
+            <th class="right">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+      <div class="totals">
+        <div class="box">
+          <table>
+            <tbody>
+              <tr>
+                <td><strong>Total Return Amount</strong></td>
+                <td class="right total-row">${formatINR(ret.total_return_amount)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="no-print" style="text-align:right; margin-top:12px;">
+        <button onclick="window.print()" style="padding:8px 12px; background:#111827; color:#fff; border:none; border-radius:6px;">Print</button>
+      </div>
+    </div>
+  </body>
+</html>`
+
+    const iframe = document.createElement('iframe')
+    iframe.style.position = 'absolute'
+    iframe.style.left = '-9999px'
+    document.body.appendChild(iframe)
+    const doc = iframe.contentDocument || iframe.contentWindow?.document
+    if (!doc) { document.body.removeChild(iframe); return }
+    doc.open(); doc.write(html); doc.close()
+    iframe.onload = () => {
+      setTimeout(() => {
+        try { iframe.contentWindow?.print() } finally { setTimeout(() => document.body.removeChild(iframe), 500) }
+      }, 300)
+    }
+  }
 
   const handleExportCSV = () => {
     const csvColumns = [
@@ -128,6 +236,7 @@ const ReturnOrderPage = () => {
                   <TableHead>Date</TableHead>
                   <TableHead>Return Amount</TableHead>
                   <TableHead>Original Order ID</TableHead>
+                  <TableHead>Print</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -148,6 +257,16 @@ const ReturnOrderPage = () => {
                     </TableCell>
                     <TableCell className="font-medium">
                       #{returnItem.original_order_id}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handlePrintReturn(returnItem)}
+                        className="h-8 text-xs"
+                      >
+                        <Printer className="w-4 h-4 mr-1" /> Print
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

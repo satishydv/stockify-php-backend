@@ -11,5 +11,7 @@ CREATE TABLE `products` (
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `sell_price` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `payment_method` enum('cash','card','upi','bank_transfer','cheque') COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Payment method used to purchase this product from supplier',
+  `receipt_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'URL or file path to the payment receipt',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

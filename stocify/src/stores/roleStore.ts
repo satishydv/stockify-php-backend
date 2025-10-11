@@ -8,7 +8,7 @@ interface RoleStore {
   roles: Role[]
   isLoading: boolean
   addRole: (role: Omit<Role, "id" | "createdAt" | "updatedAt">) => void
-  deleteRole: (id: string) => void
+  deleteRole: (id: string) => Promise<void>
   updateRole: (id: string, updates: Partial<Role>) => void
   updateRolePermissions: (roleId: string, module: string, permission: string, value: boolean) => void
   fetchRoles: () => Promise<void>
@@ -31,9 +31,17 @@ export const useRoleStore = create<RoleStore>((set, get) => ({
     ]
   })),
   
-  deleteRole: (id) => set((state) => ({
-    roles: state.roles.filter((role) => role.id !== id)
-  })),
+  deleteRole: async (id) => {
+    try {
+      await apiClient.deleteRole(id)
+      set((state) => ({
+        roles: state.roles.filter((role) => role.id !== id)
+      }))
+    } catch (error) {
+      console.error('Error deleting role:', error)
+      throw error
+    }
+  },
   
   updateRole: (id, updates) => set((state) => ({
     roles: state.roles.map((role) =>

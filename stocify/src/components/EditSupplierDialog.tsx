@@ -272,26 +272,25 @@ export default function EditSupplierDialog({ supplier, isOpen, onClose }: EditSu
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Company Location</h3>
             
-            {/* Street Address */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-supplier-street">Street Address</Label>
-              <Input
-                id="edit-supplier-street"
-                placeholder="123 Main Street"
-                value={formData.street}
-                onChange={(e) => handleInputChange("street", e.target.value)}
-                className={errors.street ? "border-red-500" : ""}
-              />
-              {errors.street && (
-                <div className="flex items-center gap-1 text-red-500 text-sm">
-                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                  {errors.street}
-                </div>
-              )}
-            </div>
-
-            {/* City, State, ZIP */}
+            {/* Street Address, City, ZIP Code */}
             <div className="grid grid-cols-3 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-supplier-street">Street Address</Label>
+                <Input
+                  id="edit-supplier-street"
+                  placeholder="123 Main Street"
+                  value={formData.street}
+                  onChange={(e) => handleInputChange("street", e.target.value)}
+                  className={errors.street ? "border-red-500" : ""}
+                />
+                {errors.street && (
+                  <div className="flex items-center gap-1 text-red-500 text-sm">
+                    <div className="w-1 h-1 bg-red-500 rounded-full"></div>
+                    {errors.street}
+                  </div>
+                )}
+              </div>
+
               <div className="flex flex-col gap-2">
                 <Label htmlFor="edit-supplier-city">City</Label>
                 <Input
@@ -305,23 +304,6 @@ export default function EditSupplierDialog({ supplier, isOpen, onClose }: EditSu
                   <div className="flex items-center gap-1 text-red-500 text-sm">
                     <div className="w-1 h-1 bg-red-500 rounded-full"></div>
                     {errors.city}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="edit-supplier-state">State</Label>
-                <Input
-                  id="edit-supplier-state"
-                  placeholder="NY"
-                  value={formData.state}
-                  onChange={(e) => handleInputChange("state", e.target.value)}
-                  className={errors.state ? "border-red-500" : ""}
-                />
-                {errors.state && (
-                  <div className="flex items-center gap-1 text-red-500 text-sm">
-                    <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                    {errors.state}
                   </div>
                 )}
               </div>
@@ -344,22 +326,41 @@ export default function EditSupplierDialog({ supplier, isOpen, onClose }: EditSu
               </div>
             </div>
 
-            {/* Country */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-supplier-country">Country</Label>
-              <Input
-                id="edit-supplier-country"
-                placeholder="USA"
-                value={formData.country}
-                onChange={(e) => handleInputChange("country", e.target.value)}
-                className={errors.country ? "border-red-500" : ""}
-              />
-              {errors.country && (
-                <div className="flex items-center gap-1 text-red-500 text-sm">
-                  <div className="w-1 h-1 bg-red-500 rounded-full"></div>
-                  {errors.country}
-                </div>
-              )}
+            {/* State, Country */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-supplier-state">State</Label>
+                <Input
+                  id="edit-supplier-state"
+                  placeholder="NY"
+                  value={formData.state}
+                  onChange={(e) => handleInputChange("state", e.target.value)}
+                  className={errors.state ? "border-red-500" : ""}
+                />
+                {errors.state && (
+                  <div className="flex items-center gap-1 text-red-500 text-sm">
+                    <div className="w-1 h-1 bg-red-500 rounded-full"></div>
+                    {errors.state}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-supplier-country">Country</Label>
+                <Input
+                  id="edit-supplier-country"
+                  placeholder="USA"
+                  value={formData.country}
+                  onChange={(e) => handleInputChange("country", e.target.value)}
+                  className={errors.country ? "border-red-500" : ""}
+                />
+                {errors.country && (
+                  <div className="flex items-center gap-1 text-red-500 text-sm">
+                    <div className="w-1 h-1 bg-red-500 rounded-full"></div>
+                    {errors.country}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -367,7 +368,7 @@ export default function EditSupplierDialog({ supplier, isOpen, onClose }: EditSu
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Additional Information</h3>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="edit-supplier-gstin">GSTIN (Optional)</Label>
                 <Input
@@ -387,19 +388,19 @@ export default function EditSupplierDialog({ supplier, isOpen, onClose }: EditSu
                   onChange={(e) => handleInputChange("website", e.target.value)}
                 />
               </div>
-            </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-supplier-status">Status</Label>
-              <select
-                id="edit-supplier-status"
-                value={formData.status}
-                onChange={(e) => handleInputChange("status", e.target.value as Supplier["status"])}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-supplier-status">Status</Label>
+                <select
+                  id="edit-supplier-status"
+                  value={formData.status}
+                  onChange={(e) => handleInputChange("status", e.target.value as Supplier["status"])}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>

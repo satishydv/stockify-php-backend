@@ -92,7 +92,7 @@ export const useCategoryColumns = () => {
       cell: ({ row }) => {
         const code = row.getValue("code") as string
         return (
-          <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+          <span className="font-mono text-sm bg-gray-100 dark:text-orange-500 px-2 py-1 rounded">
             {code}
           </span>
         )

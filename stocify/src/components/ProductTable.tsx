@@ -19,7 +19,7 @@ function FilterArea() {
     <div className="flex gap-3">
       {/* status */}
       <div className="border-dashed border rounded-sm p-1 flex gap-2 items-center px-2 text-sm">
-        <span className="text-gray-600">Status</span>
+        <span className="text-muted-foreground">Status</span>
         <Separator orientation="vertical" />
         <div className="flex gap-2 items-center">
           <Badge variant={"secondary"}>item 1</Badge>
@@ -28,7 +28,7 @@ function FilterArea() {
       </div>
       {/* category */}
       <div className="border-dashed border rounded-sm p-1 flex gap-2 items-center px-2 text-sm">
-        <span className="text-gray-600">Category</span>
+        <span className="text-muted-foreground">Category</span>
         <Separator orientation="vertical" />
         <div className="flex gap-2 items-center">
           <Badge variant={"secondary"}>item 1</Badge>
@@ -75,7 +75,7 @@ export function ProductTable() {
           <div className="flex items-center gap-4">
             <StatusDropdown />
             <CategoryDropdown />
-            {deletedRecordsDialog}
+            {/* {deletedRecordsDialog} */}
           </div>
         </div>
         {/* filter area */}

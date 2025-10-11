@@ -15,7 +15,7 @@ function FilterArea() {
     <div className="flex gap-3">
       {/* status */}
       <div className="border-dashed border rounded-sm p-1 flex gap-2 items-center px-2 text-sm">
-        <span className="text-gray-600">Status</span>
+        <span className="text-muted-foreground">Status</span>
         <Separator orientation="vertical" />
         <div className="flex gap-2 items-center">
           <Badge variant={"secondary"}>Active</Badge>

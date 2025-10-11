@@ -27,8 +27,8 @@ const STATUS_OPTIONS = [
     id: 'draft',
     label: 'Draft',
     icon: IoMail,
-    color: 'bg-gray-100 text-gray-700',
-    iconColor: 'text-gray-600'
+    color: 'bg-muted text-muted-foreground',
+    iconColor: 'text-muted-foreground'
   }
 ]
 
@@ -74,7 +74,7 @@ export function StatusDropdown() {
             <Separator className="my-2" />
             <Button 
               variant="ghost" 
-              className="w-full justify-center text-gray-600 hover:text-gray-800"
+              className="w-full justify-center text-muted-foreground hover:text-foreground"
               onClick={handleClearFilters}
             >
               Clear Filters

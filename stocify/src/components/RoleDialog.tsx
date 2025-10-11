@@ -145,7 +145,7 @@ export default function RoleDialog() {
       <DialogTrigger asChild>
         <Button className="h-10">Add Role</Button>
       </DialogTrigger>
-      <DialogContent className="p-7 px-8 poppins min-w-6xl min-h-[600px]">
+      <DialogContent className="p-7 px-8 poppins min-w-4xl w-full max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-[22px]">Permissions</DialogTitle>
           <DialogDescription>
@@ -189,26 +189,26 @@ export default function RoleDialog() {
               </div>
             </div>
             
-            {/* Permissions Table */}
-            <div className="border rounded-lg overflow-hidden">
-              <div className="max-h-96 overflow-y-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
+              {/* Permissions Table */}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="max-h-64 overflow-auto">
+                <table className="w-full table-fixed">
+                  <thead className="bg-muted border-b">
                     <tr>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Permission</th>
-                      <th className="text-center py-3 px-4 font-medium text-gray-700">Create</th>
-                      <th className="text-center py-3 px-4 font-medium text-gray-700">Read</th>
-                      <th className="text-center py-3 px-4 font-medium text-gray-700">Update</th>
-                      <th className="text-center py-3 px-4 font-medium text-gray-700">Delete</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground w-1/3">Permission</th>
+                      <th className="text-center py-3 px-2 font-medium text-muted-foreground w-1/6">Create</th>
+                      <th className="text-center py-3 px-2 font-medium text-muted-foreground w-1/6">Read</th>
+                      <th className="text-center py-3 px-2 font-medium text-muted-foreground w-1/6">Update</th>
+                      <th className="text-center py-3 px-2 font-medium text-muted-foreground w-1/6">Delete</th>
                     </tr>
                   </thead>
                   <tbody>
                     {moduleNames.map((module, index) => (
-                      <tr key={module} className={`border-b border-gray-100 hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
-                        <td className="py-3 px-4 font-medium text-gray-900 capitalize">
+                      <tr key={module} className={`border-b hover:bg-muted/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
+                        <td className="py-3 px-4 font-medium text-foreground capitalize w-1/3">
                           {module}
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3 px-2 text-center w-1/6">
                           <Checkbox
                             id={`${module}-create`}
                             checked={formData.permissions[module].create}
@@ -217,7 +217,7 @@ export default function RoleDialog() {
                             }
                           />
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3 px-2 text-center w-1/6">
                           <Checkbox
                             id={`${module}-read`}
                             checked={formData.permissions[module].read}
@@ -226,7 +226,7 @@ export default function RoleDialog() {
                             }
                           />
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3 px-2 text-center w-1/6">
                           <Checkbox
                             id={`${module}-update`}
                             checked={formData.permissions[module].update}
@@ -235,7 +235,7 @@ export default function RoleDialog() {
                             }
                           />
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3 px-2 text-center w-1/6">
                           <Checkbox
                             id={`${module}-delete`}
                             checked={formData.permissions[module].delete}
@@ -262,7 +262,7 @@ export default function RoleDialog() {
           <Button 
             onClick={handleSubmit} 
             disabled={isSubmitting}
-            className="h-11 px-11 bg-gray-600 hover:bg-gray-700 disabled:opacity-50"
+            className="h-11 px-11"
           >
             {isSubmitting ? 'Creating...' : 'Create Role'}
           </Button>

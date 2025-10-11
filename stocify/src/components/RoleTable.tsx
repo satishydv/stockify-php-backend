@@ -16,7 +16,7 @@ function FilterArea() {
     <div className="flex gap-3">
       {/* role type */}
       <div className="border-dashed border rounded-sm p-1 flex gap-2 items-center px-2 text-sm">
-        <span className="text-gray-600">Type</span>
+        <span className="text-muted-foreground">Type</span>
         <Separator orientation="vertical" />
         <div className="flex gap-2 items-center">
           <Badge variant={"secondary"}>Admin</Badge>
@@ -34,7 +34,7 @@ function FilterArea() {
 export function RoleTable() {
   const { roles } = useRoleStore()
   const { searchQuery, setSearchQuery } = useFilterStore()
-  const { columns, editDialog } = useRoleColumns()
+  const { columns, editDialog, deletedRecordsDialog } = useRoleColumns()
 
   // Filter roles based on search query
   const filteredRoles = roles.filter(role =>
@@ -52,6 +52,9 @@ export function RoleTable() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          <div className="flex items-center gap-4">
+            {/* {deletedRecordsDialog} */}
+          </div>
         </div>
         {/* filter area */}
         <FilterArea />

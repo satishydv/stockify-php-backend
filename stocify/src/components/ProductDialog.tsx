@@ -342,7 +342,7 @@ export default function ProductDialog() {
             {/* Product Items Table */}
             <div className="border rounded-lg overflow-hidden">
               {/* Table Header */}
-              <div className="grid grid-cols-7 gap-4 p-3 bg-gray-50 border-b font-medium text-sm">
+              <div className="grid grid-cols-7 gap-4 p-3 bg-muted border-b font-medium text-sm">
                 <div>Product</div>
                 <div>SKU</div>
                 <div>Qty</div>
@@ -421,9 +421,9 @@ export default function ProductDialog() {
                       placeholder="0.00"
                       value={product.net_purchase_price}
                       readOnly
-                      className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                      className="bg-muted text-muted-foreground cursor-not-allowed"
                     />
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       Auto-calculated
                     </div>
                   </div>
@@ -479,10 +479,10 @@ export default function ProductDialog() {
             </div> */}
 
             {/* Subtotal Row */}
-            <div className="border-t bg-blue-50">
+            <div className="border-t bg-muted/50">
               <div className="grid grid-cols-7 gap-4 p-3">
-                <div className="col-span-5 font-semibold text-sm text-gray-800">Subtotal:</div>
-                <div className="text-sm font-semibold text-gray-800 text-right">
+                <div className="col-span-5 font-semibold text-sm text-foreground">Subtotal:</div>
+                <div className="text-sm font-semibold text-foreground text-right">
                   ₹{formData.products.reduce((sum, product) => {
                     const total = (parseFloat(product.purchase_price) || 0) * (parseInt(product.quantity) || 0)
                     return sum + total
@@ -497,7 +497,7 @@ export default function ProductDialog() {
               <div className="grid grid-cols-3 gap-4">
                 {/* Product Status */}
                 <div>
-                  <Label htmlFor="status" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="status" className="text-sm font-medium text-foreground">
                     Product Status *
                   </Label>
                   <Select value={formData.status} onValueChange={(value: "draft" | "paid" | "due") => handleInputChange('status', value)}>
@@ -507,7 +507,7 @@ export default function ProductDialog() {
                     <SelectContent>
                       <SelectItem value="draft">
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          <div className="w-2 h-2 bg-muted-foreground rounded-full"></div>
                           Draft
                         </div>
                       </SelectItem>
@@ -530,7 +530,7 @@ export default function ProductDialog() {
 
                 {/* Receipt Upload (single for all products) */}
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">
+                  <Label className="text-sm font-medium text-foreground">
                     Payment Receipt (Optional)
                   </Label>
                   <div className="mt-1">
@@ -551,7 +551,7 @@ export default function ProductDialog() {
 
                 {/* Payment Method (single for all products) */}
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">
+                  <Label className="text-sm font-medium text-foreground">
                     Payment Method
                   </Label>
                   <div className="mt-1">

@@ -297,6 +297,23 @@ class ApiClient {
   async getDashboardStatistics() {
     return this.request('/api/dashboard/statistics');
   }
+
+  // Soft delete endpoints
+  async softDelete(table: string, id: string) {
+    return this.request(`/api/soft-delete/${table}/${id}`, {
+      method: 'POST',
+    });
+  }
+
+  async restore(table: string, id: string) {
+    return this.request(`/api/restore/${table}/${id}`, {
+      method: 'POST',
+    });
+  }
+
+  async getDeletedRecords(table: string) {
+    return this.request(`/api/deleted/${table}`);
+  }
 }
 
 // Create a singleton instance

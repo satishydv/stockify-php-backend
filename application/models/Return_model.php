@@ -25,6 +25,7 @@ class Return_model extends CI_Model {
      * Get all returns
      */
     public function get_all_returns() {
+        $this->db->where('delete', 0);
         $this->db->order_by('created_at', 'DESC');
         $query = $this->db->get('returns');
         
@@ -43,6 +44,7 @@ class Return_model extends CI_Model {
      */
     public function get_return_by_id($id) {
         $this->db->where('id', $id);
+        $this->db->where('delete', 0);
         $query = $this->db->get('returns');
         
         if ($query->num_rows() > 0) {
@@ -59,6 +61,7 @@ class Return_model extends CI_Model {
      */
     public function get_return_by_return_id($return_id) {
         $this->db->where('return_id', $return_id);
+        $this->db->where('delete', 0);
         $query = $this->db->get('returns');
         
         if ($query->num_rows() > 0) {
@@ -75,6 +78,7 @@ class Return_model extends CI_Model {
      */
     public function get_returns_by_order_id($order_id) {
         $this->db->where('original_order_id', $order_id);
+        $this->db->where('delete', 0);
         $this->db->order_by('created_at', 'DESC');
         $query = $this->db->get('returns');
         
@@ -127,6 +131,7 @@ class Return_model extends CI_Model {
      */
     public function get_returns_by_status($status) {
         $this->db->where('status', $status);
+        $this->db->where('delete', 0);
         $this->db->order_by('created_at', 'DESC');
         $query = $this->db->get('returns');
         
@@ -146,6 +151,7 @@ class Return_model extends CI_Model {
     public function get_returns_by_date_range($start_date, $end_date) {
         $this->db->where('return_date >=', $start_date);
         $this->db->where('return_date <=', $end_date);
+        $this->db->where('delete', 0);
         $this->db->order_by('return_date', 'DESC');
         $query = $this->db->get('returns');
         
@@ -168,6 +174,7 @@ class Return_model extends CI_Model {
             $this->db->where('return_date <=', $end_date);
         }
         
+        $this->db->where('delete', 0);
         $this->db->select_sum('total_return_amount');
         $query = $this->db->get('returns');
         
@@ -182,20 +189,59 @@ class Return_model extends CI_Model {
         $stats = [];
         
         // Total returns
-        $stats['total_returns'] = $this->db->count_all('returns');
+        $this->db->where('delete', 0);
+        $stats['total_returns'] = $this->db->count_all_results('returns');
         
         // Returns by status
         $this->db->select('status, COUNT(*) as count');
+        $this->db->where('delete', 0);
         $this->db->group_by('status');
         $query = $this->db->get('returns');
         $stats['by_status'] = $query->result_array();
         
         // Total return amount
         $this->db->select_sum('total_return_amount');
+        $this->db->where('delete', 0);
         $query = $this->db->get('returns');
         $result = $query->row();
         $stats['total_amount'] = $result->total_return_amount ?: 0;
         
         return $stats;
+    }
+    
+    /**
+     * Soft delete return
+     */
+    public function soft_delete_return($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 0);
+        return $this->db->update('returns', ['delete' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    /**
+     * Restore return
+     */
+    public function restore_return($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 1);
+        return $this->db->update('returns', ['delete' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    /**
+     * Get deleted returns
+     */
+    public function get_deleted_returns() {
+        $this->db->where('delete', 1);
+        $this->db->order_by('updated_at', 'DESC');
+        $query = $this->db->get('returns');
+        
+        $returns = $query->result_array();
+        
+        // Decode JSON items for each return
+        foreach ($returns as &$return) {
+            $return['items'] = json_decode($return['items'], true);
+        }
+        
+        return $returns;
     }
 }

@@ -213,7 +213,8 @@ class Suppliers extends CI_Controller {
             return;
         }
         
-        if ($this->Supplier_model->delete_supplier($id)) {
+        // Use soft delete instead of hard delete
+        if ($this->Supplier_model->soft_delete_supplier($id)) {
             $this->output
                 ->set_status_header(200)
                 ->set_content_type('application/json')

@@ -299,11 +299,12 @@ class Products extends CI_Controller {
             return;
         }
         
-        if ($this->Product_model->delete_product($id)) {
-            // Also delete the corresponding stock entry
+        // Use soft delete instead of hard delete
+        if ($this->Product_model->soft_delete_product($id)) {
+            // Also soft delete the corresponding stock entry
             $stock_entry = $this->Stock_model->get_stock_by_sku($product['sku']);
             if ($stock_entry) {
-                $this->Stock_model->delete_stock($stock_entry['id']);
+                $this->Stock_model->soft_delete_stock($stock_entry['id']);
             }
             
             $this->output

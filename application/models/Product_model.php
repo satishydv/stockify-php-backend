@@ -9,6 +9,7 @@ class Product_model extends CI_Model {
     }
     
     public function get_all_products() {
+        $this->db->where('delete', 0);
         $this->db->order_by('created_at', 'DESC');
         $query = $this->db->get('products');
         $products = $query->result_array();
@@ -39,6 +40,7 @@ class Product_model extends CI_Model {
     
     public function get_product_by_id($id) {
         $this->db->where('id', $id);
+        $this->db->where('delete', 0);
         $query = $this->db->get('products');
         $product = $query->row_array();
         
@@ -69,6 +71,7 @@ class Product_model extends CI_Model {
     
     public function get_product_by_sku($sku) {
         $this->db->where('sku', $sku);
+        $this->db->where('delete', 0);
         $query = $this->db->get('products');
         return $query->row_array();
     }
@@ -141,5 +144,46 @@ class Product_model extends CI_Model {
     public function delete_product($id) {
         $this->db->where('id', $id);
         return $this->db->delete('products');
+    }
+    
+    public function soft_delete_product($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 0);
+        return $this->db->update('products', ['delete' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    public function restore_product($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 1);
+        return $this->db->update('products', ['delete' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    public function get_deleted_products() {
+        $this->db->where('delete', 1);
+        $this->db->order_by('updated_at', 'DESC');
+        $query = $this->db->get('products');
+        $products = $query->result_array();
+        
+        return array_map(function($product) {
+            return [
+                'id' => $product['id'],
+                'name' => $product['name'],
+                'sku' => $product['sku'],
+                'purchase_price' => (float)$product['purchase_price'],
+                'sell_price' => (float)$product['sell_price'],
+                'category' => $product['category'],
+                'status' => $product['status'],
+                'quantityInStock' => (int)$product['quantity_in_stock'],
+                'supplier' => $product['supplier'],
+                'branch_name' => $product['branch_name'],
+                'payment_method' => $product['payment_method'],
+                'receipt_url' => $product['receipt_url'],
+                'minimumStockLevel' => 10,
+                'maximumStockLevel' => 1000,
+                'lastUpdated' => $product['updated_at'],
+                'createdAt' => $product['created_at'],
+                'icon' => '📦'
+            ];
+        }, $products);
     }
 }

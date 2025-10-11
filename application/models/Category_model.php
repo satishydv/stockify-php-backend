@@ -9,6 +9,7 @@ class Category_model extends CI_Model {
     }
     
     public function get_all_categories() {
+        $this->db->where('delete', 0);
         $this->db->order_by('created_at', 'DESC');
         $query = $this->db->get('categories');
         $categories = $query->result_array();
@@ -28,6 +29,7 @@ class Category_model extends CI_Model {
     
     public function get_category_by_id($id) {
         $this->db->where('id', $id);
+        $this->db->where('delete', 0);
         $query = $this->db->get('categories');
         $category = $query->row_array();
         
@@ -47,12 +49,14 @@ class Category_model extends CI_Model {
     
     public function get_category_by_name($name) {
         $this->db->where('name', $name);
+        $this->db->where('delete', 0);
         $query = $this->db->get('categories');
         return $query->row_array();
     }
     
     public function get_category_by_code($code) {
         $this->db->where('code', $code);
+        $this->db->where('delete', 0);
         $query = $this->db->get('categories');
         return $query->row_array();
     }
@@ -92,5 +96,35 @@ class Category_model extends CI_Model {
     public function delete_category($id) {
         $this->db->where('id', $id);
         return $this->db->delete('categories');
+    }
+    
+    public function soft_delete_category($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 0);
+        return $this->db->update('categories', ['delete' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    public function restore_category($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 1);
+        return $this->db->update('categories', ['delete' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    public function get_deleted_categories() {
+        $this->db->where('delete', 1);
+        $this->db->order_by('updated_at', 'DESC');
+        $query = $this->db->get('categories');
+        $categories = $query->result_array();
+        
+        return array_map(function($category) {
+            return [
+                'id' => $category['id'],
+                'name' => $category['name'],
+                'code' => $category['code'],
+                'status' => $category['status'],
+                'createdAt' => $category['created_at'],
+                'updatedAt' => $category['updated_at']
+            ];
+        }, $categories);
     }
 }

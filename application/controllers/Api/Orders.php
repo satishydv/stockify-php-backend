@@ -457,8 +457,8 @@ class Orders extends CI_Controller {
             return;
         }
         
-            // Delete the order (this will also delete order items due to foreign key constraints)
-            $result = $this->Order_model->delete_order($id);
+            // Use soft delete instead of hard delete
+            $result = $this->Order_model->soft_delete_order($id);
             
             if ($result) {
             $this->output

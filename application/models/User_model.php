@@ -12,6 +12,7 @@ class User_model extends CI_Model {
         $this->db->select('u.id, u.name, u.first_name, u.last_name, u.email, u.address, u.is_verified, u.created_at, u.updated_at, r.id as role_id, r.name as role_name');
         $this->db->from('users u');
         $this->db->join('roles r', 'u.role_id = r.id', 'left');
+        $this->db->where('u.delete', 0);
         $this->db->order_by('u.created_at', 'DESC');
         $query = $this->db->get();
         
@@ -40,6 +41,7 @@ class User_model extends CI_Model {
         $this->db->from('users u');
         $this->db->join('roles r', 'u.role_id = r.id', 'left');
         $this->db->where('u.id', $id);
+        $this->db->where('u.delete', 0);
         $query = $this->db->get();
         
         $user = $query->row_array();
@@ -65,6 +67,7 @@ class User_model extends CI_Model {
     
     public function get_user_by_email($email) {
         $this->db->where('email', $email);
+        $this->db->where('delete', 0);
         $query = $this->db->get('users');
         return $query->row_array();
     }
@@ -93,6 +96,44 @@ class User_model extends CI_Model {
     public function delete_user($id) {
         $this->db->where('id', $id);
         return $this->db->delete('users');
+    }
+    
+    public function soft_delete_user($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 0);
+        return $this->db->update('users', ['delete' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    public function restore_user($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 1);
+        return $this->db->update('users', ['delete' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    public function get_deleted_users() {
+        $this->db->select('u.id, u.name, u.first_name, u.last_name, u.email, u.address, u.is_verified, u.created_at, u.updated_at, r.id as role_id, r.name as role_name');
+        $this->db->from('users u');
+        $this->db->join('roles r', 'u.role_id = r.id', 'left');
+        $this->db->where('u.delete', 1);
+        $this->db->order_by('u.updated_at', 'DESC');
+        $query = $this->db->get();
+        
+        $users = $query->result_array();
+        
+        return array_map(function($user) {
+            $displayName = $user['name'] ?: trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
+            
+            return [
+                'id' => $user['id'],
+                'name' => $displayName,
+                'email' => $user['email'],
+                'address' => $user['address'],
+                'role' => $user['role_name'] ? strtolower($user['role_name']) : 'user',
+                'status' => $user['is_verified'] ? 'active' : 'inactive',
+                'createdAt' => $user['created_at'],
+                'updatedAt' => $user['updated_at']
+            ];
+        }, $users);
     }
     
     public function create_session($user_id, $token) {

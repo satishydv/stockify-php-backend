@@ -20,6 +20,7 @@ class Order_model extends CI_Model {
 
     // Get all orders
     public function get_all_orders() {
+        $this->db->where('delete', 0);
         $this->db->order_by('created_at', 'DESC');
         return $this->db->get('orders')->result_array();
     }
@@ -27,6 +28,7 @@ class Order_model extends CI_Model {
     // Get order by ID
     public function get_order_by_id($id) {
         $this->db->where('id', $id);
+        $this->db->where('delete', 0);
         $result = $this->db->get('orders');
         return $result->row_array();
     }
@@ -63,11 +65,33 @@ class Order_model extends CI_Model {
             return TRUE;
         }
     }
+    
+    // Soft delete order
+    public function soft_delete_order($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 0);
+        return $this->db->update('orders', ['delete' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    // Restore order
+    public function restore_order($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 1);
+        return $this->db->update('orders', ['delete' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    // Get deleted orders
+    public function get_deleted_orders() {
+        $this->db->where('delete', 1);
+        $this->db->order_by('updated_at', 'DESC');
+        return $this->db->get('orders')->result_array();
+    }
 
     // Get orders by date range
     public function get_orders_by_date_range($start_date, $end_date) {
         $this->db->where('order_date >=', $start_date);
         $this->db->where('order_date <=', $end_date);
+        $this->db->where('delete', 0);
         $this->db->order_by('order_date', 'DESC');
         return $this->db->get('orders')->result_array();
     }
@@ -75,6 +99,7 @@ class Order_model extends CI_Model {
     // Get orders by customer
     public function get_orders_by_customer($customer_name) {
         $this->db->like('customer_name', $customer_name);
+        $this->db->where('delete', 0);
         $this->db->order_by('created_at', 'DESC');
         return $this->db->get('orders')->result_array();
     }
@@ -82,13 +107,15 @@ class Order_model extends CI_Model {
     // Get total sales amount
     public function get_total_sales() {
         $this->db->select_sum('total_amount');
+        $this->db->where('delete', 0);
         $result = $this->db->get('orders');
         return $result->row()->total_amount ?? 0;
     }
 
     // Get orders count
     public function get_orders_count() {
-        return $this->db->count_all('orders');
+        $this->db->where('delete', 0);
+        return $this->db->count_all_results('orders');
     }
 
     // Update order

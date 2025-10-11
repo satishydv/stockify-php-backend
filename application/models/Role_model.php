@@ -9,6 +9,7 @@ class Role_model extends CI_Model {
     }
     
     public function get_all_roles() {
+        $this->db->where('delete', 0);
         $this->db->order_by('created_at', 'DESC');
         $query = $this->db->get('roles');
         $roles = $query->result_array();
@@ -29,6 +30,7 @@ class Role_model extends CI_Model {
     
     public function get_role_by_id($id) {
         $this->db->where('id', $id);
+        $this->db->where('delete', 0);
         $query = $this->db->get('roles');
         $role = $query->row_array();
         
@@ -49,6 +51,7 @@ class Role_model extends CI_Model {
     
     public function get_role_by_name($name) {
         $this->db->where('name', $name);
+        $this->db->where('delete', 0);
         $query = $this->db->get('roles');
         return $query->row_array();
     }
@@ -86,6 +89,37 @@ class Role_model extends CI_Model {
     public function delete_role($id) {
         $this->db->where('id', $id);
         return $this->db->delete('roles');
+    }
+    
+    public function soft_delete_role($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 0);
+        return $this->db->update('roles', ['delete' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    public function restore_role($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 1);
+        return $this->db->update('roles', ['delete' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    public function get_deleted_roles() {
+        $this->db->where('delete', 1);
+        $this->db->order_by('updated_at', 'DESC');
+        $query = $this->db->get('roles');
+        $roles = $query->result_array();
+        
+        return array_map(function($role) {
+            return [
+                'id' => $role['id'],
+                'name' => $role['name'],
+                'type' => $role['name'],
+                'description' => $role['description'] ?? null,
+                'permissions' => $this->parse_permissions_from_json($role['permissions']),
+                'createdAt' => $role['created_at'],
+                'updatedAt' => $role['updated_at']
+            ];
+        }, $roles);
     }
     
     /**

@@ -244,7 +244,8 @@ class Users extends CI_Controller {
             return;
         }
         
-        if ($this->User_model->delete_user($id)) {
+        // Use soft delete instead of hard delete
+        if ($this->User_model->soft_delete_user($id)) {
             $this->output
                 ->set_status_header(200)
                 ->set_content_type('application/json')

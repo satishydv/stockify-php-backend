@@ -219,7 +219,8 @@ class Taxes extends CI_Controller {
                 return;
             }
             
-            $result = $this->Tax_model->delete_tax($id);
+            // Use soft delete instead of hard delete
+            $result = $this->Tax_model->soft_delete_tax($id);
             
             if ($result) {
                 $this->output

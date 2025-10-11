@@ -9,6 +9,7 @@ class Branch_model extends CI_Model {
     }
     
     public function get_all_branches() {
+        $this->db->where('delete', 0);
         $this->db->order_by('created_at', 'DESC');
         $query = $this->db->get('branches');
         $branches = $query->result_array();
@@ -29,6 +30,7 @@ class Branch_model extends CI_Model {
     
     public function get_branch_by_id($id) {
         $this->db->where('id', $id);
+        $this->db->where('delete', 0);
         $query = $this->db->get('branches');
         $branch = $query->row_array();
         
@@ -49,6 +51,7 @@ class Branch_model extends CI_Model {
     
     public function get_branch_by_name($name) {
         $this->db->where('name', $name);
+        $this->db->where('delete', 0);
         $query = $this->db->get('branches');
         return $query->row_array();
     }
@@ -75,5 +78,36 @@ class Branch_model extends CI_Model {
     public function delete_branch($id) {
         $this->db->where('id', $id);
         return $this->db->delete('branches');
+    }
+    
+    public function soft_delete_branch($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 0);
+        return $this->db->update('branches', ['delete' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    public function restore_branch($id) {
+        $this->db->where('id', $id);
+        $this->db->where('delete', 1);
+        return $this->db->update('branches', ['delete' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+    
+    public function get_deleted_branches() {
+        $this->db->where('delete', 1);
+        $this->db->order_by('updated_at', 'DESC');
+        $query = $this->db->get('branches');
+        $branches = $query->result_array();
+        
+        return array_map(function($branch) {
+            return [
+                'id' => $branch['id'],
+                'name' => $branch['name'],
+                'address' => $branch['address'],
+                'phone' => $branch['phone'],
+                'status' => $branch['status'],
+                'created_at' => $branch['created_at'],
+                'updated_at' => $branch['updated_at']
+            ];
+        }, $branches);
     }
 }

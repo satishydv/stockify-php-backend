@@ -179,7 +179,8 @@ class Roles extends CI_Controller {
             return;
         }
         
-        if ($this->Role_model->delete_role($id)) {
+        // Use soft delete instead of hard delete
+        if ($this->Role_model->soft_delete_role($id)) {
             $this->output
                 ->set_status_header(200)
                 ->set_content_type('application/json')

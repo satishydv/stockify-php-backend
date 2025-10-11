@@ -47,7 +47,7 @@ export function ProductTable() {
   const { products, loading, error, fetchProducts } = useProductStore()
   const filteredProducts = useFilteredProducts()
   const { searchQuery, setSearchQuery } = useFilterStore()
-  const { columns: productColumns, editDialog } = useProductColumns()
+  const { columns: productColumns, editDialog, deletedRecordsDialog } = useProductColumns()
 
   // Fetch products on component mount
   useEffect(() => {
@@ -75,6 +75,7 @@ export function ProductTable() {
           <div className="flex items-center gap-4">
             <StatusDropdown />
             <CategoryDropdown />
+            {deletedRecordsDialog}
           </div>
         </div>
         {/* filter area */}

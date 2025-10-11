@@ -13,6 +13,7 @@ import {
 import { IoCopy, IoCreate, IoTrash, IoEllipsisVertical, IoCash, IoCard, IoWallet, IoPrint } from "react-icons/io5"
 import { useState } from "react"
 import EditProductDialog from "@/components/EditProductDialog"
+import DeletedRecordsDialog from "@/components/DeletedRecordsDialog"
 import { toast } from "sonner"
 
 export const useProductColumns = () => {
@@ -446,6 +447,14 @@ export const useProductColumns = () => {
         isOpen={isEditDialogOpen}
         onClose={handleCloseEditDialog}
       />
-    ) : null
+    ) : null,
+    deletedRecordsDialog: (
+      <DeletedRecordsDialog table="products" tableName="Product">
+        <Button variant="outline" size="sm" className="text-orange-600 hover:text-orange-700">
+          <IoTrash className="mr-2 h-4 w-4" />
+          View Deleted
+        </Button>
+      </DeletedRecordsDialog>
+    )
   }
 }

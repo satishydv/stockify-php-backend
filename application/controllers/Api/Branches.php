@@ -185,7 +185,8 @@ class Branches extends CI_Controller {
             return;
         }
         
-        if ($this->Branch_model->delete_branch($id)) {
+        // Use soft delete instead of hard delete
+        if ($this->Branch_model->soft_delete_branch($id)) {
             $this->output
                 ->set_status_header(200)
                 ->set_content_type('application/json')

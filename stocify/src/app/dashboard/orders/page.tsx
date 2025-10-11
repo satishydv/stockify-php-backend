@@ -22,7 +22,9 @@ import {
   Plus,
   Minus,
   ArrowLeft,
-  Download
+  Download,
+  FileSpreadsheet,
+  FileDown
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -48,6 +50,8 @@ import {
 import { useProductStore } from "@/stores/productStore"
 import { Product } from "@/lib/product-data"
 import { useCSVExport } from "@/lib/useCSVExport"
+import { useExcelExport } from "@/lib/useExcelExport"
+import { usePDFExport } from "@/lib/usePDFExport"
 
 interface OrderItem {
   id: number
@@ -86,6 +90,8 @@ const page = () => {
   const [statusFilter, setStatusFilter] = useState("all")
   const [sortBy, setSortBy] = useState("new")
   const { exportToCSV, formatCurrency, formatDate, formatStatus } = useCSVExport()
+  const { exportToExcel, formatCurrency: formatCurrencyExcel, formatDate: formatDateExcel, formatStatus: formatStatusExcel } = useExcelExport()
+  const { exportToPDF, formatCurrency: formatCurrencyPDF, formatDate: formatDatePDF, formatStatus: formatStatusPDF } = usePDFExport()
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [returningOrder, setReturningOrder] = useState<Order | null>(null)
@@ -228,22 +234,67 @@ const page = () => {
 
   const formatCurrencyDisplay = (value: number | string) => `₹${(parseFloat(String(value)) || 0).toFixed(2)}`
 
-  const handleExportCSV = () => {
-    const csvColumns = [
-      { key: 'order_number', label: 'Order #' },
-      { key: 'customer_name', label: 'Customer Name' },
-      { key: 'mobile_no', label: 'Mobile Number' },
-      { key: 'order_date', label: 'Order Date', formatter: formatDate },
-      { key: 'status', label: 'Status', formatter: formatStatus },
-      { key: 'payment_method', label: 'Payment Method' },
-      { key: 'subtotal', label: 'Subtotal', formatter: formatCurrency },
-      { key: 'tax_amount', label: 'Tax Amount', formatter: formatCurrency },
-      { key: 'total_amount', label: 'Total Amount', formatter: formatCurrency },
-      { key: 'transaction_id', label: 'Transaction ID' },
-      { key: 'created_at', label: 'Created Date', formatter: formatDate }
-    ]
+  // Define columns for all export formats
+  const getExportColumns = () => [
+    { key: 'order_number', label: 'Order #' },
+    { key: 'customer_name', label: 'Customer Name' },
+    { key: 'mobile_no', label: 'Mobile Number' },
+    { key: 'order_date', label: 'Order Date', formatter: formatDate },
+    { key: 'status', label: 'Status', formatter: formatStatus },
+    { key: 'payment_method', label: 'Payment Method' },
+    { key: 'subtotal', label: 'Subtotal', formatter: formatCurrency },
+    { key: 'tax_amount', label: 'Tax Amount', formatter: formatCurrency },
+    { key: 'total_amount', label: 'Total Amount', formatter: formatCurrency },
+    { key: 'transaction_id', label: 'Transaction ID' },
+    { key: 'created_at', label: 'Created Date', formatter: formatDate }
+  ]
 
-    exportToCSV(sortedOrders, 'orders.csv', csvColumns)
+  const getExcelColumns = () => [
+    { key: 'order_number', label: 'Order #', width: 15 },
+    { key: 'customer_name', label: 'Customer Name', width: 25 },
+    { key: 'mobile_no', label: 'Mobile Number', width: 15 },
+    { key: 'order_date', label: 'Order Date', formatter: formatDateExcel, width: 15 },
+    { key: 'status', label: 'Status', formatter: formatStatusExcel, width: 15 },
+    { key: 'payment_method', label: 'Payment Method', width: 20 },
+    { key: 'subtotal', label: 'Subtotal', formatter: formatCurrencyExcel, width: 15 },
+    { key: 'tax_amount', label: 'Tax Amount', formatter: formatCurrencyExcel, width: 15 },
+    { key: 'total_amount', label: 'Total Amount', formatter: formatCurrencyExcel, width: 15 },
+    { key: 'transaction_id', label: 'Transaction ID', width: 20 },
+    { key: 'created_at', label: 'Created Date', formatter: formatDateExcel, width: 15 }
+  ]
+
+  const getPDFColumns = () => [
+    { key: 'order_number', label: 'Order #', width: 20, align: 'center' as const },
+    { key: 'customer_name', label: 'Customer Name', width: 30, align: 'left' as const },
+    { key: 'mobile_no', label: 'Mobile Number', width: 20, align: 'center' as const },
+    { key: 'order_date', label: 'Order Date', formatter: formatDatePDF, width: 20, align: 'center' as const },
+    { key: 'status', label: 'Status', formatter: formatStatusPDF, width: 20, align: 'center' as const },
+    { key: 'payment_method', label: 'Payment Method', width: 25, align: 'center' as const },
+    { key: 'subtotal', label: 'Subtotal', formatter: formatCurrencyPDF, width: 20, align: 'right' as const },
+    { key: 'tax_amount', label: 'Tax Amount', formatter: formatCurrencyPDF, width: 20, align: 'right' as const },
+    { key: 'total_amount', label: 'Total Amount', formatter: formatCurrencyPDF, width: 20, align: 'right' as const },
+    { key: 'transaction_id', label: 'Transaction ID', width: 25, align: 'center' as const },
+    { key: 'created_at', label: 'Created Date', formatter: formatDatePDF, width: 20, align: 'center' as const }
+  ]
+
+  const handleExportCSV = () => {
+    exportToCSV(sortedOrders, 'orders.csv', getExportColumns())
+  }
+
+  const handleExportExcel = () => {
+    exportToExcel(sortedOrders, 'orders.xlsx', getExcelColumns(), {
+      sheetName: 'Orders',
+      filename: 'orders.xlsx'
+    })
+  }
+
+  const handleExportPDF = () => {
+    exportToPDF(sortedOrders, 'orders.pdf', getPDFColumns(), {
+      title: 'Orders Report',
+      orientation: 'landscape',
+      pageSize: 'A4',
+      filename: 'orders.pdf'
+    })
   }
 
   const handlePrint = async (order: Order) => {
@@ -598,14 +649,41 @@ const page = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button 
-            onClick={handleExportCSV}
-            className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2"
-            disabled={sortedOrders.length === 0}
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2"
+                disabled={sortedOrders.length === 0}
+              >
+                <Download className="w-4 h-4" />
+                Export
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem 
+                onClick={handleExportCSV}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <FileDown className="w-4 h-4 text-green-600" />
+                <span className="text-green-600 font-medium">CSV</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleExportExcel}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+                <span className="text-blue-600 font-medium">Excel</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleExportPDF}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <FileText className="w-4 h-4 text-red-600" />
+                <span className="text-red-600 font-medium">PDF</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

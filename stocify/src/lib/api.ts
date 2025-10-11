@@ -292,6 +292,11 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Dashboard endpoints
+  async getDashboardStatistics() {
+    return this.request('/api/dashboard/statistics');
+  }
 }
 
 // Create a singleton instance

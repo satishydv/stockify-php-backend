@@ -11,8 +11,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Download, Printer } from "lucide-react"
+import { Download, Printer, ChevronDown, FileSpreadsheet, FileText, FileDown } from "lucide-react"
 import { useCSVExport } from "@/lib/useCSVExport"
+import { useExcelExport } from "@/lib/useExcelExport"
+import { usePDFExport } from "@/lib/usePDFExport"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface ReturnItem {
   product_id: number
@@ -42,6 +50,8 @@ const ReturnOrderPage = () => {
   const [returns, setReturns] = useState<Return[]>([])
   const [loading, setLoading] = useState(true)
   const { exportToCSV, formatCurrency, formatDate } = useCSVExport()
+  const { exportToExcel, formatCurrency: formatCurrencyExcel, formatDate: formatDateExcel } = useExcelExport()
+  const { exportToPDF, formatCurrency: formatCurrencyPDF, formatDate: formatDatePDF } = usePDFExport()
 
   // Fetch returns from API
   useEffect(() => {
@@ -177,17 +187,58 @@ const ReturnOrderPage = () => {
     }
   }
 
-  const handleExportCSV = () => {
-    const csvColumns = [
-      { key: 'return_id', label: 'Return ID' },
-      { key: 'customer_name', label: 'Customer Name' },
-      { key: 'customer_phone', label: 'Phone No' },
-      { key: 'return_date', label: 'Date', formatter: formatDate },
-      { key: 'total_return_amount', label: 'Return Amount', formatter: formatCurrency },
-      { key: 'original_order_id', label: 'Original Order ID' }
-    ]
+  // Define columns for all export formats
+  const getExportColumns = () => [
+    { key: 'return_id', label: 'Return ID' },
+    { key: 'customer_name', label: 'Customer Name' },
+    { key: 'customer_phone', label: 'Phone No' },
+    { key: 'return_date', label: 'Date', formatter: formatDate },
+    { key: 'total_return_amount', label: 'Return Amount', formatter: formatCurrency },
+    { key: 'original_order_id', label: 'Original Order ID' },
+    { key: 'status', label: 'Status' },
+    { key: 'return_reason', label: 'Return Reason' }
+  ]
 
-    exportToCSV(returns, 'returns.csv', csvColumns)
+  const getExcelColumns = () => [
+    { key: 'return_id', label: 'Return ID', width: 15 },
+    { key: 'customer_name', label: 'Customer Name', width: 25 },
+    { key: 'customer_phone', label: 'Phone No', width: 15 },
+    { key: 'return_date', label: 'Date', formatter: formatDateExcel, width: 15 },
+    { key: 'total_return_amount', label: 'Return Amount', formatter: formatCurrencyExcel, width: 20 },
+    { key: 'original_order_id', label: 'Original Order ID', width: 20 },
+    { key: 'status', label: 'Status', width: 15 },
+    { key: 'return_reason', label: 'Return Reason', width: 30 }
+  ]
+
+  const getPDFColumns = () => [
+    { key: 'return_id', label: 'Return ID', width: 20, align: 'center' as const },
+    { key: 'customer_name', label: 'Customer Name', width: 30, align: 'left' as const },
+    { key: 'customer_phone', label: 'Phone No', width: 20, align: 'center' as const },
+    { key: 'return_date', label: 'Date', formatter: formatDatePDF, width: 20, align: 'center' as const },
+    { key: 'total_return_amount', label: 'Return Amount', formatter: formatCurrencyPDF, width: 25, align: 'right' as const },
+    { key: 'original_order_id', label: 'Original Order ID', width: 25, align: 'center' as const },
+    { key: 'status', label: 'Status', width: 20, align: 'center' as const },
+    { key: 'return_reason', label: 'Return Reason', width: 40, align: 'left' as const }
+  ]
+
+  const handleExportCSV = () => {
+    exportToCSV(returns, 'returns.csv', getExportColumns())
+  }
+
+  const handleExportExcel = () => {
+    exportToExcel(returns, 'returns.xlsx', getExcelColumns(), {
+      sheetName: 'Returns',
+      filename: 'returns.xlsx'
+    })
+  }
+
+  const handleExportPDF = () => {
+    exportToPDF(returns, 'returns.pdf', getPDFColumns(), {
+      title: 'Returns Report',
+      orientation: 'landscape',
+      pageSize: 'A4',
+      filename: 'returns.pdf'
+    })
   }
 
 
@@ -210,14 +261,41 @@ const ReturnOrderPage = () => {
             <CardTitle className="font-bold text-[23px]">Returns</CardTitle>
             <p className="text-sm text-slate-600">{returns.length} total returns</p>
           </div>
-          <Button 
-            onClick={handleExportCSV}
-            className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2"
-            disabled={returns.length === 0}
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2"
+                disabled={returns.length === 0}
+              >
+                <Download className="w-4 h-4" />
+                Export
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem 
+                onClick={handleExportCSV}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <FileDown className="w-4 h-4 text-green-600" />
+                <span className="text-green-600 font-medium">CSV</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleExportExcel}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+                <span className="text-blue-600 font-medium">Excel</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleExportPDF}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <FileText className="w-4 h-4 text-red-600" />
+                <span className="text-red-600 font-medium">PDF</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       <CardContent>

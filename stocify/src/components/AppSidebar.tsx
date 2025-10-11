@@ -5,7 +5,6 @@ import {
   User2,
   ChevronUp,
   Plus,
-  Projector,
   ChevronDown,
   Box,
   Warehouse,
@@ -21,25 +20,18 @@ import {
   ArrowLeft,
   Settings,
   FileText,
-  TrendingUp,
-  DollarSign,
 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarSeparator,
 } from "./ui/sidebar";
 import Link from "next/link";
@@ -167,15 +159,15 @@ const AppSidebar = () => {
     <Sidebar
       collapsible="icon"
       className="text-white"
-      style={{
-        // Override shadcn sidebar CSS variables for consistent coloring
-        ["--sidebar" as any]: "oklch(0.42 0.17 262)", // purple background
-        ["--sidebar-foreground" as any]: "oklch(0.985 0 0)", // white text
-        ["--sidebar-accent" as any]: "oklch(0.32 0.12 277)", // hover
-        ["--sidebar-accent-foreground" as any]: "oklch(0.985 0 0)",
-        ["--sidebar-border" as any]: "oklch(1 0 0 / 12%)",
-        ["--sidebar-ring" as any]: "oklch(0.56 0.18 277)",
-      }}
+      // style={{
+      //   // Override shadcn sidebar CSS variables for consistent coloring
+      //   ["--sidebar" as any]: "oklch(0.42 0.17 262)", // purple background
+      //   ["--sidebar-foreground" as any]: "oklch(0.985 0 0)", // white text
+      //   ["--sidebar-accent" as any]: "oklch(0.32 0.12 277)", // hover
+      //   ["--sidebar-accent-foreground" as any]: "oklch(0.985 0 0)",
+      //   ["--sidebar-border" as any]: "oklch(1 0 0 / 12%)",
+      //   ["--sidebar-ring" as any]: "oklch(0.56 0.18 277)",
+      // }}
     >
       <SidebarHeader className="py-4">
         <SidebarMenu>
@@ -183,7 +175,7 @@ const AppSidebar = () => {
             <SidebarMenuButton asChild>
               <Link href="/">
                 <Image src="/icon/icon.png" alt="logo" width={30} height={30} />
-                <span className="text-2xl font-bold text-white">Inventory</span>
+                <span className="text-2xl font-bold text-yellow-500">Inventory</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -192,7 +184,7 @@ const AppSidebar = () => {
       <SidebarSeparator className="bg-white/20" />
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-white/80">Application</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-black/80 dark:text-yellow-400">Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {itemsBeforeSells.map((item) => (
@@ -201,8 +193,8 @@ const AppSidebar = () => {
                     asChild
                     className={`${
                       isActive(item.url)
-                        ? "bg-white text-black rounded-full"
-                        : "text-white hover:bg-white/10"
+                        ? "bg-black text-yellow-400 rounded-md px-0.2"
+                        : "text-black hover:bg-black/10 dark:text-white"
                     }`}
                   >
                     <Link href={item.url}>
@@ -221,7 +213,7 @@ const AppSidebar = () => {
           <SidebarMenu>
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="text-white hover:bg-white/10">
+                <SidebarMenuButton className="text-black hover:bg-black/10 dark:text-white">
                   <ShoppingCart />
                   <span>Sells</span>
                   <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
@@ -234,8 +226,8 @@ const AppSidebar = () => {
                   asChild
                   className={`${
                     isActive("/dashboard/create-order")
-                      ? "bg-white text-black rounded-full"
-                      : "text-white hover:bg-white/10"
+                      ? "bg-black text-yellow-400 rounded-md"
+                      : "text-black hover:bg-black/10 dark:text-white"
                   }`}
                 >
                   <Link href="/dashboard/create-order">
@@ -249,8 +241,8 @@ const AppSidebar = () => {
                   asChild
                   className={`${
                     isActive("/dashboard/orders")
-                      ? "bg-white text-black rounded-full"
-                      : "text-white hover:bg-white/10"
+                      ? "bg-black text-yellow-400 rounded-md"
+                      : "text-black hover:bg-black/10 dark:text-white"
                   }`}
                 >
                   <Link href="/dashboard/orders">
@@ -264,8 +256,8 @@ const AppSidebar = () => {
                   asChild
                   className={`${
                     isActive("/dashboard/return-order")
-                      ? "bg-white text-black rounded-full"
-                      : "text-white hover:bg-white/10"
+                      ? "bg-black text-yellow-400 rounded-md"
+                      : "text-black hover:bg-black/10 dark:text-white "
                   }`}
                 >
                   <Link href="/dashboard/return-order">
@@ -283,7 +275,7 @@ const AppSidebar = () => {
           <SidebarMenu>
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="text-white hover:bg-white/10">
+                <SidebarMenuButton className="text-black hover:bg-black/10 dark:text-white">
                   <ChartBar />
                   <span>Reports</span>
                   <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
@@ -297,8 +289,8 @@ const AppSidebar = () => {
                     asChild
                     className={`${
                       isActive(item.url)
-                        ? "bg-white text-black rounded-full"
-                        : "text-white hover:bg-white/10"
+                        ? "bg-black text-yellow-400 rounded-md p-2"
+                        : "text-black hover:bg-black/10 dark:text-white"
                     }`}
                   >
                     <Link href={item.url}>
@@ -318,7 +310,7 @@ const AppSidebar = () => {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="text-white hover:bg-white/10">
+                <SidebarMenuButton className="text-black hover:bg-black/10 dark:text-white">
                   <User2 /> Admin <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>

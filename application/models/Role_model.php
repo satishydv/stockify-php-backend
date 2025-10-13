@@ -153,10 +153,12 @@ class Role_model extends CI_Model {
      * Output: {"users": {"create": true, "read": true, "update": false, "delete": false}}
      */
     private function parse_permissions_from_json($permissions_json) {
-        // Define all available modules
+        // Define baseline modules (extendable)
         $all_modules = [
             'dashboard', 'products', 'users', 'orders', 'stocks', 
-            'sales', 'reports', 'suppliers', 'categories'
+            'sales', 'reports', 'suppliers', 'categories',
+            // Newly added modules
+            'setup', 'taxes', 'branch', 'roles'
         ];
         
         // Initialize permissions structure for all modules
@@ -179,7 +181,17 @@ class Role_model extends CI_Model {
                     if (strpos($permission, ':') !== false) {
                         list($module, $action) = explode(':', $permission, 2);
                         
-                        if (isset($permissions[$module]) && isset($permissions[$module][$action])) {
+                        // If we encounter a module not in baseline, initialize it on the fly
+                        if (!isset($permissions[$module])) {
+                            $permissions[$module] = [
+                                'create' => false,
+                                'read' => false,
+                                'update' => false,
+                                'delete' => false,
+                            ];
+                        }
+                        
+                        if (isset($permissions[$module][$action])) {
                             $permissions[$module][$action] = true;
                         }
                     }

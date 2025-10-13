@@ -1,5 +1,6 @@
 "use client"
 
+import React, { useEffect, useState } from 'react'
 import { TrendingUp } from "lucide-react"
 import { LabelList, RadialBar, RadialBarChart } from "recharts"
 
@@ -17,49 +18,109 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { apiClient } from "@/lib/api"
 
-export const description = "A radial chart with a label"
+export const description = "A radial chart showing payment methods distribution"
 
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 90, fill: "var(--color-other)" },
-]
+interface PaymentMethodData {
+  method: string
+  count: number
+  total: number
+  fill: string
+}
 
 const chartConfig = {
-  visitors: {
-    label: "mode of payments",
+  count: {
+    label: "Orders",
   },
-  chrome: {
-    label: "Chrome",
+  cash: {
+    label: "Cash",
     color: "var(--chart-1)",
   },
-  safari: {
-    label: "Safari",
+  card: {
+    label: "Card",
     color: "var(--chart-2)",
   },
-  firefox: {
-    label: "Firefox",
+  upi: {
+    label: "UPI",
     color: "var(--chart-3)",
   },
-  edge: {
-    label: "Edge",
+  "bank transfer": {
+    label: "Bank Transfer",
     color: "var(--chart-4)",
   },
-  other: {
-    label: "Other",
+  cheque: {
+    label: "Cheque",
     color: "var(--chart-5)",
   },
 } satisfies ChartConfig
 
 export function ChartRadialLabel() {
+  const [chartData, setChartData] = useState<PaymentMethodData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      try {
+        setLoading(true)
+        const response = await apiClient.getPaymentMethods()
+        if (response.success) {
+          setChartData(response.data)
+        } else {
+          setError('Failed to fetch payment methods data')
+        }
+      } catch (err) {
+        console.error('Error fetching payment methods:', err)
+        setError('Error loading payment methods data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPaymentMethods()
+  }, [])
+
+  if (loading) {
+    return (
+      <Card className="flex flex-col">
+        <CardHeader className="items-center pb-0">
+          <CardTitle>Payment Methods</CardTitle>
+          <CardDescription>Loading payment data...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 pb-0">
+          <div className="flex items-center justify-center h-[250px]">
+            <div className="text-gray-500">Loading...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card className="flex flex-col">
+        <CardHeader className="items-center pb-0">
+          <CardTitle>Payment Methods</CardTitle>
+          <CardDescription>Error loading data</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 pb-0">
+          <div className="flex items-center justify-center h-[250px]">
+            <div className="text-red-500">{error}</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const totalOrders = chartData.reduce((sum, item) => sum + item.count, 0)
+  const totalAmount = chartData.reduce((sum, item) => sum + item.total, 0)
+
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Radial Chart - Label</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Payment Methods</CardTitle>
+        <CardDescription>Distribution of payment methods</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -75,14 +136,21 @@ export function ChartRadialLabel() {
           >
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel nameKey="browser" />}
+              content={<ChartTooltipContent 
+                hideLabel 
+                nameKey="method"
+                formatter={(value, name) => [
+                  `${value} orders`,
+                  name
+                ]}
+              />}
             />
-            <RadialBar dataKey="visitors" background>
+            <RadialBar dataKey="count" background>
               <LabelList
                 position="insideStart"
-                dataKey="browser"
+                dataKey="method"
                 className="fill-white capitalize mix-blend-luminosity"
-                fontSize={11}
+                fontSize={10}
               />
             </RadialBar>
           </RadialBarChart>
@@ -90,10 +158,13 @@ export function ChartRadialLabel() {
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 leading-none font-medium">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+          Total orders: {totalOrders.toLocaleString()} <TrendingUp className="h-4 w-4" />
         </div>
         <div className="text-muted-foreground leading-none">
-          Showing total visitors for the last 6 months
+          Total amount: {new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR'
+          }).format(totalAmount)}
         </div>
       </CardFooter>
     </Card>

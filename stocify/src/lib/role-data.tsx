@@ -17,6 +17,10 @@ export type Role = {
     reports: { create: boolean; read: boolean; update: boolean; delete: boolean }
     suppliers: { create: boolean; read: boolean; update: boolean; delete: boolean }
     categories: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    setup: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    taxes: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    branch: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    roles: { create: boolean; read: boolean; update: boolean; delete: boolean }
   }
   createdAt: string
   updatedAt: string
@@ -37,6 +41,10 @@ export const roles: Role[] = [
       reports: { create: true, read: true, update: true, delete: true },
       suppliers: { create: true, read: true, update: true, delete: true },
       categories: { create: true, read: true, update: true, delete: true },
+      setup: { create: true, read: true, update: true, delete: true },
+      taxes: { create: true, read: true, update: true, delete: true },
+      branch: { create: true, read: true, update: true, delete: true },
+      roles: { create: true, read: true, update: true, delete: true },
     },
     createdAt: "2024-01-01",
     updatedAt: "2024-01-01"
@@ -55,6 +63,10 @@ export const roles: Role[] = [
       reports: { create: false, read: true, update: false, delete: false },
       suppliers: { create: true, read: true, update: true, delete: false },
       categories: { create: true, read: true, update: true, delete: false },
+      setup: { create: true, read: true, update: true, delete: false },
+      taxes: { create: true, read: true, update: true, delete: false },
+      branch: { create: true, read: true, update: true, delete: false },
+      roles: { create: true, read: true, update: true, delete: false },
     },
     createdAt: "2024-01-02",
     updatedAt: "2024-01-02"
@@ -73,6 +85,10 @@ export const roles: Role[] = [
       reports: { create: false, read: true, update: false, delete: false },
       suppliers: { create: false, read: true, update: false, delete: false },
       categories: { create: false, read: true, update: false, delete: false },
+      setup: { create: false, read: true, update: false, delete: false },
+      taxes: { create: false, read: true, update: false, delete: false },
+      branch: { create: true, read: true, update: true, delete: false },
+      roles: { create: false, read: true, update: true, delete: false },
     },
     createdAt: "2024-01-03",
     updatedAt: "2024-01-03"
@@ -91,6 +107,10 @@ export const roles: Role[] = [
       reports: { create: false, read: true, update: false, delete: false },
       suppliers: { create: false, read: true, update: false, delete: false },
       categories: { create: false, read: true, update: false, delete: false },
+      setup: { create: false, read: true, update: false, delete: false },
+      taxes: { create: false, read: true, update: false, delete: false },
+      branch: { create: false, read: true, update: false, delete: false },
+      roles: { create: false, read: true, update: false, delete: false },
     },
     createdAt: "2024-01-04",
     updatedAt: "2024-01-04"
@@ -141,7 +161,11 @@ export const moduleNames = [
   "sales",
   "reports",
   "suppliers",
-  "categories"
+  "categories",
+  "setup",
+  "taxes",
+  "branch",
+  "roles"
 ] as const
 
 export type ModuleName = typeof moduleNames[number]

@@ -298,6 +298,18 @@ class ApiClient {
     return this.request('/api/dashboard/statistics');
   }
 
+  async getMonthlySales() {
+    return this.request('/api/dashboard/monthly-sales');
+  }
+
+  async getPaymentMethods() {
+    return this.request('/api/dashboard/payment-methods');
+  }
+
+  async getCategorySales() {
+    return this.request('/api/dashboard/category-sales');
+  }
+
   // Soft delete endpoints
   async softDelete(table: string, id: string) {
     return this.request(`/api/soft-delete/${table}/${id}`, {

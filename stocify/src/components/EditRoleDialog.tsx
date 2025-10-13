@@ -31,6 +31,10 @@ interface EditRoleFormData {
     reports: { create: boolean; read: boolean; update: boolean; delete: boolean }
     suppliers: { create: boolean; read: boolean; update: boolean; delete: boolean }
     categories: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    setup: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    taxes: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    branch: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    roles: { create: boolean; read: boolean; update: boolean; delete: boolean }
   }
 }
 
@@ -52,6 +56,10 @@ const initialFormData: EditRoleFormData = {
     reports: { create: false, read: false, update: false, delete: false },
     suppliers: { create: false, read: false, update: false, delete: false },
     categories: { create: false, read: false, update: false, delete: false },
+    setup: { create: false, read: false, update: false, delete: false },
+    taxes: { create: false, read: false, update: false, delete: false },
+    branch: { create: false, read: false, update: false, delete: false },
+    roles: { create: false, read: false, update: false, delete: false },
   }
 }
 
@@ -61,12 +69,22 @@ export default function EditRoleDialog({ role, isOpen, onClose }: EditRoleDialog
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { updateRole, fetchRoles } = useRoleStore()
 
+  const emptyModule = { create: false, read: false, update: false, delete: false }
+  const normalizePermissions = (perms: EditRoleFormData["permissions"]) => {
+    const normalized = { ...perms } as EditRoleFormData["permissions"]
+    moduleNames.forEach((m) => {
+      // @ts-expect-error index type is ensured by runtime check
+      normalized[m] = normalized[m] ?? { ...emptyModule }
+    })
+    return normalized
+  }
+
   // Populate form when role changes
   useEffect(() => {
     if (role && isOpen) {
       setFormData({
         name: role.name || "",
-        permissions: role.permissions || initialFormData.permissions
+        permissions: normalizePermissions((role.permissions as any) || initialFormData.permissions)
       })
       setErrors({})
     }
@@ -95,8 +113,8 @@ export default function EditRoleDialog({ role, isOpen, onClose }: EditRoleDialog
 
   const areAllPermissionsSelected = () => {
     return moduleNames.every(module => {
-      const modulePermissions = formData.permissions[module]
-      return modulePermissions.create && modulePermissions.read && 
+      const modulePermissions = (formData.permissions as any)[module] ?? emptyModule
+      return modulePermissions.create && modulePermissions.read &&
              modulePermissions.update && modulePermissions.delete
     })
   }
@@ -134,9 +152,13 @@ export default function EditRoleDialog({ role, isOpen, onClose }: EditRoleDialog
     setIsSubmitting(true)
     
     try {
-      const result = await apiClient.updateRole(role.id, {
+      const normalized: any = {}
+      moduleNames.forEach(m => {
+        normalized[m] = (formData.permissions as any)[m] ?? { create:false, read:false, update:false, delete:false }
+      })
+      await apiClient.updateRole(role.id, {
         name: formData.name,
-        permissions: formData.permissions
+        permissions: normalized
       })
 
       // Update role in store
@@ -229,7 +251,7 @@ export default function EditRoleDialog({ role, isOpen, onClose }: EditRoleDialog
                         <td className="py-3 px-2 text-center w-1/6">
                           <Checkbox
                             id={`edit-${module}-create`}
-                            checked={formData.permissions[module].create}
+                            checked={(formData.permissions as any)[module]?.create || false}
                             onCheckedChange={(checked) => 
                               handlePermissionChange(module, 'create', checked as boolean)
                             }
@@ -238,7 +260,7 @@ export default function EditRoleDialog({ role, isOpen, onClose }: EditRoleDialog
                         <td className="py-3 px-2 text-center w-1/6">
                           <Checkbox
                             id={`edit-${module}-read`}
-                            checked={formData.permissions[module].read}
+                            checked={(formData.permissions as any)[module]?.read || false}
                             onCheckedChange={(checked) => 
                               handlePermissionChange(module, 'read', checked as boolean)
                             }
@@ -247,7 +269,7 @@ export default function EditRoleDialog({ role, isOpen, onClose }: EditRoleDialog
                         <td className="py-3 px-2 text-center w-1/6">
                           <Checkbox
                             id={`edit-${module}-update`}
-                            checked={formData.permissions[module].update}
+                            checked={(formData.permissions as any)[module]?.update || false}
                             onCheckedChange={(checked) => 
                               handlePermissionChange(module, 'update', checked as boolean)
                             }
@@ -256,7 +278,7 @@ export default function EditRoleDialog({ role, isOpen, onClose }: EditRoleDialog
                         <td className="py-3 px-2 text-center w-1/6">
                           <Checkbox
                             id={`edit-${module}-delete`}
-                            checked={formData.permissions[module].delete}
+                            checked={(formData.permissions as any)[module]?.delete || false}
                             onCheckedChange={(checked) => 
                               handlePermissionChange(module, 'delete', checked as boolean)
                             }

@@ -289,7 +289,7 @@ function LoginPage() {
       <Image 
       src="/login/login.png"
       alt="Hero Image"
-      width={600}
+      width={500}
       height={500}
       className='rounded-lg'
       />

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useEffect, useState } from 'react'
 import { TrendingUp } from "lucide-react"
 import { Label, Pie, PieChart } from "recharts"
 
@@ -18,53 +19,118 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { apiClient } from "@/lib/api"
 
-export const description = "A donut chart with text"
+export const description = "A donut chart showing sales by category"
 
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 287, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 190, fill: "var(--color-other)" },
-]
+interface CategorySalesData {
+  category: string
+  sales: number
+  orders: number
+  fill: string
+}
 
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
+  sales: {
+    label: "Sales",
   },
-  chrome: {
-    label: "Chrome",
+  electronics: {
+    label: "Electronics",
     color: "var(--chart-1)",
   },
-  safari: {
-    label: "Safari",
+  clothing: {
+    label: "Clothing",
     color: "var(--chart-2)",
   },
-  firefox: {
-    label: "Firefox",
+  books: {
+    label: "Books",
     color: "var(--chart-3)",
   },
-  edge: {
-    label: "Edge",
+  home: {
+    label: "Home",
     color: "var(--chart-4)",
+  },
+  sports: {
+    label: "Sports",
+    color: "var(--chart-5)",
   },
   other: {
     label: "Other",
-    color: "var(--chart-5)",
+    color: "var(--chart-6)",
   },
 } satisfies ChartConfig
 
 export function ChartPieDonutText() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0)
+  const [chartData, setChartData] = useState<CategorySalesData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchCategorySales = async () => {
+      try {
+        setLoading(true)
+        const response = await apiClient.getCategorySales()
+        if (response.success) {
+          setChartData(response.data)
+        } else {
+          setError('Failed to fetch category sales data')
+        }
+      } catch (err) {
+        console.error('Error fetching category sales:', err)
+        setError('Error loading category sales data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCategorySales()
   }, [])
+
+  const totalSales = React.useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + curr.sales, 0)
+  }, [chartData])
+
+  const totalOrders = React.useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + curr.orders, 0)
+  }, [chartData])
+
+  if (loading) {
+    return (
+      <Card className="flex flex-col">
+        <CardHeader className="items-center pb-0">
+          <CardTitle>Sales by Category</CardTitle>
+          <CardDescription>Loading category data...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 pb-0">
+          <div className="flex items-center justify-center h-[300px]">
+            <div className="text-gray-500">Loading...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card className="flex flex-col">
+        <CardHeader className="items-center pb-0">
+          <CardTitle>Sales by Category</CardTitle>
+          <CardDescription>Error loading data</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 pb-0">
+          <div className="flex items-center justify-center h-[300px]">
+            <div className="text-red-500">{error}</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Pie Chart - Donut with Text</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Sales by Category</CardTitle>
+        <CardDescription>Distribution of sales across categories</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -74,12 +140,21 @@ export function ChartPieDonutText() {
           <PieChart>
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={<ChartTooltipContent 
+                hideLabel 
+                formatter={(value, name) => [
+                  new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR'
+                  }).format(Number(value)),
+                  name
+                ]}
+              />}
             />
             <Pie
               data={chartData}
-              dataKey="visitors"
-              nameKey="browser"
+              dataKey="sales"
+              nameKey="category"
               innerRadius={70}
               strokeWidth={50}
             >
@@ -96,16 +171,21 @@ export function ChartPieDonutText() {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          className="fill-foreground text-2xl font-bold"
                         >
-                          {totalVisitors.toLocaleString()}
+                          {new Intl.NumberFormat('en-IN', {
+                            style: 'currency',
+                            currency: 'INR',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                          }).format(totalSales)}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
+                          y={(viewBox.cy || 0) + 20}
+                          className="fill-muted-foreground text-sm"
                         >
-                          Visitors
+                          Total Sales
                         </tspan>
                       </text>
                     )
@@ -118,10 +198,10 @@ export function ChartPieDonutText() {
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 leading-none font-medium">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+          Total orders: {totalOrders.toLocaleString()} <TrendingUp className="h-4 w-4" />
         </div>
         <div className="text-muted-foreground leading-none">
-          Showing total visitors for the last 6 months
+          Showing sales distribution across {chartData.length} categories
         </div>
       </CardFooter>
     </Card>

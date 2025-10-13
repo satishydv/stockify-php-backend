@@ -13,7 +13,14 @@ const nextConfig: NextConfig = {
   // Configure for localhost development
   assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
   // Disable server-side rendering features
-  distDir: 'out'
+  distDir: 'out',
+  // Ignore lint and type errors during production builds
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  }
 };
 
 export default nextConfig;

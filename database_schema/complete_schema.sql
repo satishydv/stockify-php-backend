@@ -10,10 +10,12 @@ CREATE TABLE `roles` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `delete` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Soft delete flag: 0=active, 1=deleted',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `name` (`name`)
+  KEY `name` (`name`),
+  KEY `idx_roles_delete` (`delete`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 2. Users table (depends on roles)
@@ -24,6 +26,7 @@ CREATE TABLE `users` (
   `first_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `last_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_verified` tinyint(1) DEFAULT 0,
+  `delete` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Soft delete flag: 0=active, 1=deleted',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `role_id` int(11) NOT NULL,
@@ -31,6 +34,7 @@ CREATE TABLE `users` (
   `name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `role_id` (`role_id`),
+  KEY `idx_users_delete` (`delete`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -86,11 +90,13 @@ CREATE TABLE `categories` (
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `code` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
   `status` enum('active','inactive') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `delete` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Soft delete flag: 0=active, 1=deleted',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `name` (`name`),
-  KEY `code` (`code`)
+  KEY `code` (`code`),
+  KEY `idx_categories_delete` (`delete`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 7. Suppliers table (no dependencies)
@@ -108,9 +114,11 @@ CREATE TABLE `suppliers` (
   `category` enum('Electronics','Home Appliances','Fashion','Books','Sports','Health','Beauty','Automotive','Food','Other') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Other',
   `website` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` enum('active','inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `delete` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Soft delete flag: 0=active, 1=deleted',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_suppliers_delete` (`delete`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 8. Products table (no dependencies)
@@ -125,9 +133,11 @@ CREATE TABLE `products` (
   `status` enum('active','high','low','out_of_stock') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
   `unit_cost` decimal(10,2) DEFAULT 0.00,
   `supplier` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `delete` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Soft delete flag: 0=active, 1=deleted',
   `last_updated` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `created_at` timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_products_delete` (`delete`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 9. Stocks table (no dependencies)
@@ -142,9 +152,11 @@ CREATE TABLE `stocks` (
   `status` enum('active','high','low','out_of_stock') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
   `unit_cost` decimal(10,2) DEFAULT 0.00,
   `supplier` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `delete` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Soft delete flag: 0=active, 1=deleted',
   `last_updated` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `created_at` timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_stocks_delete` (`delete`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 10. Orders table (no dependencies)
@@ -159,7 +171,9 @@ CREATE TABLE `orders` (
   `total_amount` decimal(10,2) DEFAULT NULL,
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `sku` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`id`)
+  `delete` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Soft delete flag: 0=active, 1=deleted',
+  PRIMARY KEY (`id`),
+  KEY `idx_orders_delete` (`delete`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 11. Taxes table (no dependencies)
@@ -169,10 +183,12 @@ CREATE TABLE `taxes` (
   `code` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
   `rate` decimal(5,2) NOT NULL COMMENT 'Tax rate in percentage',
   `status` enum('enable','disable') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'enable',
+  `delete` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Soft delete flag: 0=active, 1=deleted',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`),
   KEY `name` (`name`),
-  KEY `status` (`status`)
+  KEY `status` (`status`),
+  KEY `idx_taxes_delete` (`delete`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

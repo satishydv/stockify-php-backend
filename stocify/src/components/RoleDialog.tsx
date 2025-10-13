@@ -32,6 +32,10 @@ interface RoleFormData {
     reports: { create: boolean; read: boolean; update: boolean; delete: boolean }
     suppliers: { create: boolean; read: boolean; update: boolean; delete: boolean }
     categories: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    setup: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    taxes: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    branch: { create: boolean; read: boolean; update: boolean; delete: boolean }
+    roles: { create: boolean; read: boolean; update: boolean; delete: boolean }
   }
 }
 
@@ -47,6 +51,10 @@ const initialFormData: RoleFormData = {
     reports: { create: false, read: true, update: false, delete: false },
     suppliers: { create: false, read: true, update: false, delete: false },
     categories: { create: false, read: true, update: false, delete: false },
+    setup: { create: false, read: true, update: false, delete: false },
+    taxes: { create: false, read: true, update: false, delete: false },
+    branch: { create: false, read: true, update: false, delete: false },
+    roles: { create: false, read: true, update: false, delete: false },
   }
 }
 
@@ -120,9 +128,14 @@ export default function RoleDialog() {
     setIsSubmitting(true)
     
     try {
-      const result = await apiClient.createRole({
+      // Normalize to ensure all modules are sent
+      const normalized: any = {}
+      moduleNames.forEach(m => {
+        normalized[m] = formData.permissions[m] ?? { create:false, read:false, update:false, delete:false }
+      })
+      await apiClient.createRole({
         name: formData.name,
-        permissions: formData.permissions
+        permissions: normalized
       })
 
       // Refresh roles list from server

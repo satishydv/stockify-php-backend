@@ -62,12 +62,12 @@ interface StatCardProps {
 const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon, isCurrency = false, cardColor = 'blue' }) => {
   const formatValue = (val: number | string) => {
     if (isCurrency) {
-      return new Intl.NumberFormat('en-US', {
+      return new Intl.NumberFormat('en-IN', {
         style: 'currency',
-        currency: 'USD'
+        currency: 'INR'
       }).format(Number(val))
     }
-    return new Intl.NumberFormat('en-US').format(Number(val))
+    return new Intl.NumberFormat('en-IN').format(Number(val))
   }
 
   const isPositive = change >= 0

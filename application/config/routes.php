@@ -103,6 +103,12 @@ $route['api/roles/create'] = 'api/roles/create';
 $route['api/roles/update/(:num)'] = 'api/roles/update/$1';
 $route['api/roles/delete/(:num)'] = 'api/roles/delete/$1';
 
+// Dashboard routes
+$route['api/dashboard/statistics'] = 'api/dashboard/statistics';
+$route['api/dashboard/monthly-sales'] = 'api/dashboard/monthly_sales';
+$route['api/dashboard/payment-methods'] = 'api/dashboard/payment_methods';
+$route['api/dashboard/category-sales'] = 'api/dashboard/category_sales';
+
 $route['api/taxes'] = 'api/taxes/index';
 $route['api/taxes/(:num)'] = 'api/taxes/get/$1';
 $route['api/taxes/create'] = 'api/taxes/create';

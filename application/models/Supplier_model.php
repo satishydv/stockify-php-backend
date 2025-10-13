@@ -37,6 +37,11 @@ class Supplier_model extends CI_Model {
             ];
         }, $suppliers);
     }
+
+    public function get_suppliers_count() {
+        $this->db->where('delete', 0);
+        return $this->db->count_all_results('suppliers');
+    }
     
     public function get_supplier_by_id($id) {
         $this->db->where('id', $id);

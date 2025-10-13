@@ -37,6 +37,11 @@ class Product_model extends CI_Model {
             ];
         }, $products);
     }
+
+    public function get_products_count() {
+        $this->db->where('delete', 0);
+        return $this->db->count_all_results('products');
+    }
     
     public function get_product_by_id($id) {
         $this->db->where('id', $id);

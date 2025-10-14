@@ -22,7 +22,7 @@ const initialProducts: Product[] = [
     purchase_price: 12.99,
     sell_price: 15.99,
     category: "Others",
-    status: "draft",
+    status: "partial_paid",
     quantityInStock: 50,
     supplier: "ToolSupplier Inc.",
     icon: "🔧"
@@ -70,7 +70,7 @@ const initialProducts: Product[] = [
     purchase_price: 120.00,
     sell_price: 150.00,
     category: "Furniture",
-    status: "draft",
+    status: "partial_paid",
     quantityInStock: 15,
     supplier: "HomeGoods Co.",
     icon: "📺"
@@ -106,7 +106,7 @@ const initialProducts: Product[] = [
     purchase_price: 199.99,
     sell_price: 249.99,
     category: "Electronics",
-    status: "draft",
+    status: "partial_paid",
     quantityInStock: 60,
     supplier: "TechWorld",
     icon: "📱"

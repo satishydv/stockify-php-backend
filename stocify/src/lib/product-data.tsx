@@ -11,7 +11,7 @@ export type Product = {
   purchase_price: number
   sell_price: number
   category: string
-  status: "paid" | "due" | "draft"
+  status: "paid" | "due" | "partial_paid"
   quantityInStock: number
   supplier: string
   branch_name?: string
@@ -29,7 +29,7 @@ export const products: Product[] = [
     purchase_price: 12.99,
     sell_price: 15.99,
     category: "Others",
-    status: "draft",
+    status: "partial_paid",
     quantityInStock: 50,
     supplier: "ToolSupplier Inc.",
     icon: "🔧"
@@ -77,7 +77,7 @@ export const products: Product[] = [
     purchase_price: 120.00,
     sell_price: 150.00,
     category: "Furniture",
-    status: "draft",
+    status: "partial_paid",
     quantityInStock: 15,
     supplier: "HomeGoods Co.",
     icon: "📺"
@@ -113,7 +113,7 @@ export const products: Product[] = [
     purchase_price: 199.99,
     sell_price: 249.99,
     category: "Electronics",
-    status: "draft",
+    status: "partial_paid",
     quantityInStock: 60,
     supplier: "TechWorld",
     icon: "📱"
@@ -136,11 +136,11 @@ export const getStatusBadge = (status: Product["status"]) => {
           Due
         </Badge>
       )
-    case "draft":
+    case "partial_paid":
       return (
-        <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100">
+        <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
           <IoMail className="w-3 h-3 mr-1" />
-          Draft
+          Partial Paid
         </Badge>
       )
     default:

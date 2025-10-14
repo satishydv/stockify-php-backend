@@ -166,7 +166,7 @@ CREATE TABLE `orders` (
   `supplier` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `category` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `number_of_items` int(11) DEFAULT NULL,
-  `status` enum('in_progress','paid','due') COLLATE utf8mb4_unicode_ci DEFAULT 'in_progress',
+  `status` enum('partial_paid','paid','due') COLLATE utf8mb4_unicode_ci DEFAULT 'paid',
   `expected_delivery_date` date DEFAULT NULL,
   `total_amount` decimal(10,2) DEFAULT NULL,
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,

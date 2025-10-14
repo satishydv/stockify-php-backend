@@ -5,11 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TaxTable } from '@/components/TaxTable'
 import TaxDialog from '@/components/TaxDialog'
 import { useTaxStore, Tax } from '@/stores/taxStore'
+import { usePermissions } from '@/hooks/usePermissions'
 
 const page = () => {
   const { taxes, fetchTaxes, loading } = useTaxStore()
   const [editTax, setEditTax] = useState<Tax | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const { canCreate } = usePermissions()
 
   useEffect(() => {
     fetchTaxes()
@@ -34,7 +36,7 @@ const page = () => {
             <p className="text-sm text-slate-600">{taxes.length} taxes configured</p>
           </div>
         </div>
-        <TaxDialog />
+        {canCreate('taxes') && <TaxDialog />}
       </CardHeader>
       <CardContent>
         <TaxTable onEdit={handleEdit} />

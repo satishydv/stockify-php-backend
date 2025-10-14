@@ -69,7 +69,7 @@ interface SalesMetrics {
   totalOrders: number
   paidOrders: number
   dueOrders: number
-  inProgressOrders: number
+  partialPaidOrders: number
   averageOrderValue: number
   totalCustomers: number
   uniqueCustomers: number
@@ -117,7 +117,7 @@ const SalesReportPage = () => {
     totalOrders: 0,
     paidOrders: 0,
     dueOrders: 0,
-    inProgressOrders: 0,
+    partialPaidOrders: 0,
     averageOrderValue: 0,
     totalCustomers: 0,
     uniqueCustomers: 0,
@@ -182,7 +182,7 @@ const SalesReportPage = () => {
     const totalOrders = filteredOrders.length
     const paidOrders = filteredOrders.filter(order => order.status === 'paid').length
     const dueOrders = filteredOrders.filter(order => order.status === 'due').length
-    const inProgressOrders = filteredOrders.filter(order => order.status === 'in_progress').length
+    const partialPaidOrders = filteredOrders.filter(order => order.status === 'partial_paid').length
     
     // Customer metrics
     const uniqueCustomers = new Set(filteredOrders.map(order => order.mobile_no)).size
@@ -199,7 +199,7 @@ const SalesReportPage = () => {
       totalOrders,
       paidOrders,
       dueOrders,
-      inProgressOrders,
+      partialPaidOrders,
       averageOrderValue,
       totalCustomers: filteredOrders.length,
       uniqueCustomers,
@@ -345,7 +345,7 @@ const SalesReportPage = () => {
         return <CheckCircle className="w-4 h-4 text-green-500" />
       case 'due':
         return <AlertCircle className="w-4 h-4 text-red-500" />
-      case 'in_progress':
+      case 'partial_paid':
         return <Clock className="w-4 h-4 text-yellow-500" />
       default:
         return <Clock className="w-4 h-4 text-gray-500" />
@@ -358,7 +358,7 @@ const SalesReportPage = () => {
         return 'bg-green-100 text-green-800'
       case 'due':
         return 'bg-red-100 text-red-800'
-      case 'in_progress':
+      case 'partial_paid':
         return 'bg-yellow-100 text-yellow-800'
       default:
         return 'bg-gray-100 text-gray-800'
@@ -583,15 +583,15 @@ const SalesReportPage = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">Partial Paid</CardTitle>
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {salesMetrics.inProgressOrders}
+              {salesMetrics.partialPaidOrders}
             </div>
             <p className="text-xs text-muted-foreground">
-              {salesMetrics.totalOrders > 0 ? ((salesMetrics.inProgressOrders / salesMetrics.totalOrders) * 100).toFixed(1) : 0}% of total
+              {salesMetrics.totalOrders > 0 ? ((salesMetrics.partialPaidOrders / salesMetrics.totalOrders) * 100).toFixed(1) : 0}% of total
             </p>
           </CardContent>
         </Card>

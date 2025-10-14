@@ -43,7 +43,7 @@ interface ProductFormData {
   category: string
   branch_name: string
   products: ProductItem[]
-  status: "draft" | "paid" | "due"
+  status: "partial_paid" | "paid" | "due"
   payment_method: string
   receipt_file: File | null
 }
@@ -62,7 +62,7 @@ const initialFormData: ProductFormData = {
   category: "",
   branch_name: "",
   products: [initialProductItem],
-  status: "draft",
+  status: "partial_paid",
   payment_method: "",
   receipt_file: null
 }
@@ -500,15 +500,15 @@ export default function ProductDialog() {
                   <Label htmlFor="status" className="text-sm font-medium text-foreground">
                     Product Status *
                   </Label>
-                  <Select value={formData.status} onValueChange={(value: "draft" | "paid" | "due") => handleInputChange('status', value)}>
+                  <Select value={formData.status} onValueChange={(value: "partial_paid" | "paid" | "due") => handleInputChange('status', value)}>
                     <SelectTrigger className="mt-1 w-full">
                       <SelectValue placeholder="Choose product status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft">
+                      <SelectItem value="partial_paid">
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-muted-foreground rounded-full"></div>
-                          Draft
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          Partial Paid
                         </div>
                       </SelectItem>
                       <SelectItem value="paid">

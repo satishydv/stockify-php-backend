@@ -90,8 +90,14 @@ export default function RoleDialog() {
   const areAllPermissionsSelected = () => {
     return moduleNames.every(module => {
       const modulePermissions = formData.permissions[module]
-      return modulePermissions.create && modulePermissions.read && 
-             modulePermissions.update && modulePermissions.delete
+      const isReadOnly = module === 'dashboard' || module === 'reports'
+      
+      if (isReadOnly) {
+        return modulePermissions.read
+      } else {
+        return modulePermissions.create && modulePermissions.read && 
+               modulePermissions.update && modulePermissions.delete
+      }
     })
   }
 
@@ -99,11 +105,22 @@ export default function RoleDialog() {
     const newPermissions = { ...formData.permissions }
     
     moduleNames.forEach(module => {
-      newPermissions[module] = {
-        create: checked,
-        read: checked,
-        update: checked,
-        delete: checked
+      const isReadOnly = module === 'dashboard' || module === 'reports'
+      
+      if (isReadOnly) {
+        newPermissions[module] = {
+          create: false,
+          read: checked,
+          update: false,
+          delete: false
+        }
+      } else {
+        newPermissions[module] = {
+          create: checked,
+          read: checked,
+          update: checked,
+          delete: checked
+        }
       }
     })
 
@@ -216,49 +233,60 @@ export default function RoleDialog() {
                     </tr>
                   </thead>
                   <tbody>
-                    {moduleNames.map((module, index) => (
-                      <tr key={module} className={`border-b hover:bg-muted/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
-                        <td className="py-3 px-4 font-medium text-foreground capitalize w-1/3">
-                          {module}
-                        </td>
-                        <td className="py-3 px-2 text-center w-1/6">
-                          <Checkbox
-                            id={`${module}-create`}
-                            checked={formData.permissions[module].create}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(module, 'create', checked as boolean)
-                            }
-                          />
-                        </td>
-                        <td className="py-3 px-2 text-center w-1/6">
-                          <Checkbox
-                            id={`${module}-read`}
-                            checked={formData.permissions[module].read}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(module, 'read', checked as boolean)
-                            }
-                          />
-                        </td>
-                        <td className="py-3 px-2 text-center w-1/6">
-                          <Checkbox
-                            id={`${module}-update`}
-                            checked={formData.permissions[module].update}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(module, 'update', checked as boolean)
-                            }
-                          />
-                        </td>
-                        <td className="py-3 px-2 text-center w-1/6">
-                          <Checkbox
-                            id={`${module}-delete`}
-                            checked={formData.permissions[module].delete}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(module, 'delete', checked as boolean)
-                            }
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    {moduleNames.map((module, index) => {
+                      // For dashboard and reports, only show read permission
+                      const isReadOnly = module === 'dashboard' || module === 'reports';
+                      
+                      return (
+                        <tr key={module} className={`border-b hover:bg-muted/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
+                          <td className="py-3 px-4 font-medium text-foreground capitalize w-1/3">
+                            {module}
+                          </td>
+                          <td className="py-3 px-2 text-center w-1/6">
+                            {!isReadOnly && (
+                              <Checkbox
+                                id={`${module}-create`}
+                                checked={formData.permissions[module].create}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(module, 'create', checked as boolean)
+                                }
+                              />
+                            )}
+                          </td>
+                          <td className="py-3 px-2 text-center w-1/6">
+                            <Checkbox
+                              id={`${module}-read`}
+                              checked={formData.permissions[module].read}
+                              onCheckedChange={(checked) => 
+                                handlePermissionChange(module, 'read', checked as boolean)
+                              }
+                            />
+                          </td>
+                          <td className="py-3 px-2 text-center w-1/6">
+                            {!isReadOnly && (
+                              <Checkbox
+                                id={`${module}-update`}
+                                checked={formData.permissions[module].update}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(module, 'update', checked as boolean)
+                                }
+                              />
+                            )}
+                          </td>
+                          <td className="py-3 px-2 text-center w-1/6">
+                            {!isReadOnly && (
+                              <Checkbox
+                                id={`${module}-delete`}
+                                checked={formData.permissions[module].delete}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(module, 'delete', checked as boolean)
+                                }
+                              />
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

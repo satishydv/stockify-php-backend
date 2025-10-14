@@ -42,7 +42,7 @@ export const TaxDialog: React.FC<TaxDialogProps> = ({ editTax, onClose, open: ex
     name: '',
     code: '',
     rate: '',
-    status: 'enable' as 'enable' | 'disable'
+    status: 'disable' as 'enable' | 'disable'
   })
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export const TaxDialog: React.FC<TaxDialogProps> = ({ editTax, onClose, open: ex
         name: '',
         code: '',
         rate: '',
-        status: 'enable'
+        status: 'disable'
       })
     }
   }, [editTax])
@@ -106,7 +106,7 @@ export const TaxDialog: React.FC<TaxDialogProps> = ({ editTax, onClose, open: ex
           name: '',
           code: '',
           rate: '',
-          status: 'enable'
+          status: 'disable'
         })
         onClose?.()
       }
@@ -180,7 +180,8 @@ export const TaxDialog: React.FC<TaxDialogProps> = ({ editTax, onClose, open: ex
             />
           </div>
           
-          <div className="space-y-2">
+          {/* Status dropdown commented out - default status is now 'disable' */}
+          {/* <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select
               value={formData.status}
@@ -196,7 +197,7 @@ export const TaxDialog: React.FC<TaxDialogProps> = ({ editTax, onClose, open: ex
                 <SelectItem value="disable">Disable</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
           
           <div className="flex justify-end space-x-2 pt-4">
             <Button

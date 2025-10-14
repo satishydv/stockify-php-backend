@@ -243,49 +243,60 @@ export default function EditRoleDialog({ role, isOpen, onClose }: EditRoleDialog
                     </tr>
                   </thead>
                   <tbody>
-                    {moduleNames.map((module, index) => (
-                      <tr key={module} className={`border-b hover:bg-muted/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
-                        <td className="py-3 px-4 font-medium text-foreground capitalize w-1/3">
-                          {module}
-                        </td>
-                        <td className="py-3 px-2 text-center w-1/6">
-                          <Checkbox
-                            id={`edit-${module}-create`}
-                            checked={(formData.permissions as any)[module]?.create || false}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(module, 'create', checked as boolean)
-                            }
-                          />
-                        </td>
-                        <td className="py-3 px-2 text-center w-1/6">
-                          <Checkbox
-                            id={`edit-${module}-read`}
-                            checked={(formData.permissions as any)[module]?.read || false}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(module, 'read', checked as boolean)
-                            }
-                          />
-                        </td>
-                        <td className="py-3 px-2 text-center w-1/6">
-                          <Checkbox
-                            id={`edit-${module}-update`}
-                            checked={(formData.permissions as any)[module]?.update || false}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(module, 'update', checked as boolean)
-                            }
-                          />
-                        </td>
-                        <td className="py-3 px-2 text-center w-1/6">
-                          <Checkbox
-                            id={`edit-${module}-delete`}
-                            checked={(formData.permissions as any)[module]?.delete || false}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(module, 'delete', checked as boolean)
-                            }
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    {moduleNames.map((module, index) => {
+                      // For dashboard and reports, only show read permission
+                      const isReadOnly = module === 'dashboard' || module === 'reports';
+                      
+                      return (
+                        <tr key={module} className={`border-b hover:bg-muted/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
+                          <td className="py-3 px-4 font-medium text-foreground capitalize w-1/3">
+                            {module}
+                          </td>
+                          <td className="py-3 px-2 text-center w-1/6">
+                            {!isReadOnly && (
+                              <Checkbox
+                                id={`edit-${module}-create`}
+                                checked={(formData.permissions as any)[module]?.create || false}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(module, 'create', checked as boolean)
+                                }
+                              />
+                            )}
+                          </td>
+                          <td className="py-3 px-2 text-center w-1/6">
+                            <Checkbox
+                              id={`edit-${module}-read`}
+                              checked={(formData.permissions as any)[module]?.read || false}
+                              onCheckedChange={(checked) => 
+                                handlePermissionChange(module, 'read', checked as boolean)
+                              }
+                            />
+                          </td>
+                          <td className="py-3 px-2 text-center w-1/6">
+                            {!isReadOnly && (
+                              <Checkbox
+                                id={`edit-${module}-update`}
+                                checked={(formData.permissions as any)[module]?.update || false}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(module, 'update', checked as boolean)
+                                }
+                              />
+                            )}
+                          </td>
+                          <td className="py-3 px-2 text-center w-1/6">
+                            {!isReadOnly && (
+                              <Checkbox
+                                id={`edit-${module}-delete`}
+                                checked={(formData.permissions as any)[module]?.delete || false}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(module, 'delete', checked as boolean)
+                                }
+                              />
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

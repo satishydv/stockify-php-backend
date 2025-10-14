@@ -26,6 +26,7 @@ class Stock_model extends CI_Model {
                 'maximumStockLevel' => (int)$stock['maximum_stock_level'],
                 'status' => $stock['status'],
                 'purchase_price' => (float)$stock['purchase_price'],
+                'sell_price' => isset($stock['sell_price']) ? (float)$stock['sell_price'] : null,
                 'supplier' => $stock['supplier'],
                 'lastUpdated' => $stock['last_updated'],
                 'createdAt' => $stock['created_at']
@@ -50,6 +51,7 @@ class Stock_model extends CI_Model {
                 'maximumStockLevel' => (int)$stock['maximum_stock_level'],
                 'status' => $stock['status'],
                 'purchase_price' => (float)$stock['purchase_price'],
+                'sell_price' => isset($stock['sell_price']) ? (float)$stock['sell_price'] : null,
                 'supplier' => $stock['supplier'],
                 'lastUpdated' => $stock['last_updated'],
                 'createdAt' => $stock['created_at']
@@ -76,6 +78,7 @@ class Stock_model extends CI_Model {
             'maximum_stock_level' => $data['maximum_stock_level'],
             'status' => $data['status'],
             'purchase_price' => $data['purchase_price'],
+            'sell_price' => isset($data['sell_price']) ? $data['sell_price'] : null,
             'supplier' => $data['supplier'],
             'created_at' => date('Y-m-d H:i:s')
         ];

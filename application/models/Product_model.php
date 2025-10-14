@@ -9,12 +9,14 @@ class Product_model extends CI_Model {
     }
     
     public function get_all_products() {
-        $this->db->where('delete', 0);
-        $this->db->order_by('created_at', 'DESC');
-        $query = $this->db->get('products');
-        $products = $query->result_array();
-        
-        // Transform the data to match frontend format
+        // Join with stocks to get real-time quantity_available
+        $this->db->select('p.*, s.quantity_available');
+        $this->db->from('products p');
+        $this->db->join('stocks s', 's.sku = p.sku AND s.delete = 0', 'left');
+        $this->db->where('p.delete', 0);
+        $this->db->order_by('p.created_at', 'DESC');
+        $products = $this->db->get()->result_array();
+
         return array_map(function($product) {
             return [
                 'id' => $product['id'],
@@ -24,16 +26,16 @@ class Product_model extends CI_Model {
                 'sell_price' => (float)$product['sell_price'],
                 'category' => $product['category'],
                 'status' => $product['status'],
-                'quantityInStock' => (int)$product['quantity_in_stock'],
+                'quantityInStock' => isset($product['quantity_available']) ? (int)$product['quantity_available'] : (int)$product['quantity_in_stock'],
                 'supplier' => $product['supplier'],
                 'branch_name' => $product['branch_name'],
                 'payment_method' => $product['payment_method'],
                 'receipt_url' => $product['receipt_url'],
-                'minimumStockLevel' => 10, // Default value since column doesn't exist
-                'maximumStockLevel' => 1000, // Default value since column doesn't exist
+                'minimumStockLevel' => 10,
+                'maximumStockLevel' => 1000,
                 'lastUpdated' => $product['updated_at'],
                 'createdAt' => $product['created_at'],
-                'icon' => '📦' // Default icon since column doesn't exist
+                'icon' => '📦'
             ];
         }, $products);
     }

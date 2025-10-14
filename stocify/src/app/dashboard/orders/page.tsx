@@ -317,6 +317,8 @@ const page = () => {
     const companyEmail = company.email || ''
     const companyAddress = company.address || ''
     const logoUrl = company.logo_path ? `${process.env.NEXT_PUBLIC_API_URL}/public/${company.logo_path}` : ''
+    const headerUrl = company.header_image_path ? `${process.env.NEXT_PUBLIC_API_URL}/public/${company.header_image_path}` : ''
+    const footerUrl = company.footer_image_path ? `${process.env.NEXT_PUBLIC_API_URL}/public/${company.footer_image_path}` : ''
 
     const itemsRows = order.items.map((it, idx) => `
       <tr>
@@ -337,7 +339,10 @@ const page = () => {
         <title>Order ${order.id} - Print</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; margin: 24px; color: #111827; }
+          .header-img, .footer-img { width: 100%; max-height: 160px; object-fit: contain; }
+          .footer { margin-top: 16px; }
           .header { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items:flex-start; margin-bottom:16px; }
+          .header-without-company { display:flex; justify-content:flex-end; margin-bottom:16px; }
           .title { font-size:22px; font-weight:700; color:#111827; }
           .muted { color:#6b7280; font-size:12px; }
           .stack-y > * { margin: 10px 0; }
@@ -353,7 +358,9 @@ const page = () => {
         </style>
       </head>
       <body>
-        <div class="header">
+        ${headerUrl ? `<img class="header-img" src="${headerUrl}" alt="Header" />` : ''}
+        <div class="${headerUrl ? 'header-without-company' : 'header'}">
+          ${headerUrl ? '' : `
           <div>
             ${logoUrl ? `<img src="${logoUrl}" alt="logo" style="height:56px; object-fit:contain;" />` : ''}
             <div class="title" style="margin-top:6px;">${companyName}</div>
@@ -361,6 +368,7 @@ const page = () => {
             <div class="muted">${companyPhone || ''}</div>
             <div class="muted">${companyAddress || ''}</div>
           </div>
+          `}
           <div style="text-align:right" class="stack-y">
             <div class="title">Invoice</div>
             <div class="muted">Invoice no.: <span style="color:#111827; font-weight:600;">${order.order_number}</span></div>
@@ -398,6 +406,7 @@ const page = () => {
           </div>
         </div>
 
+        ${footerUrl ? `<div class="footer"><img class="footer-img" src="${footerUrl}" alt="Footer" /></div>` : ''}
         <div class="no-print" style="margin-top:16px; text-align:right;">
           <button onclick="window.print()" style="padding:8px 12px; background:#2563eb; color:white; border:none; border-radius:6px;">Print</button>
         </div>
@@ -538,12 +547,12 @@ const page = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      'in_progress': { label: 'In Progress', variant: 'secondary' as const, color: 'bg-yellow-100 text-yellow-800' },
+      'partial_paid': { label: 'Partial Paid', variant: 'secondary' as const, color: 'bg-yellow-100 text-yellow-800' },
       'paid': { label: 'Paid', variant: 'default' as const, color: 'bg-green-100 text-green-800' },
       'due': { label: 'Due', variant: 'destructive' as const, color: 'bg-red-100 text-red-800' }
     }
     
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['in_progress']
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['partial_paid']
     return (
       <Badge className={config.color}>
         {config.label}
@@ -628,7 +637,7 @@ const page = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => setStatusFilter('all')}>All</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter('in_progress')}>In Progress</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter('partial_paid')}>Partial Paid</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setStatusFilter('paid')}>Paid</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setStatusFilter('due')}>Due</DropdownMenuItem>
             </DropdownMenuContent>
@@ -1012,9 +1021,7 @@ const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClos
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <p className="font-medium text-gray-900">₹{product.sell_price}</p>
-                          <Badge variant={product.status === 'paid' ? 'default' : 'secondary'}>
-                            {product.status}
-                          </Badge>
+                          {/* Removed payment status badge per requirement */}
                         </div>
                         <Button
                           onClick={() => addProductToOrder(product)}
@@ -1178,10 +1185,10 @@ const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClos
                           <SelectValue placeholder="Select order status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="in_progress">
+                          <SelectItem value="partial_paid">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                              In Progress
+                              Partial Paid
                             </div>
                           </SelectItem>
                           <SelectItem value="paid">

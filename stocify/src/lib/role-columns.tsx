@@ -17,11 +17,13 @@ import { toast } from "sonner"
 import { useState } from "react"
 import EditRoleDialog from "@/components/EditRoleDialog"
 import DeletedRecordsDialog from "@/components/DeletedRecordsDialog"
+import { usePermissions } from "@/hooks/usePermissions"
 
 export const useRoleColumns = () => {
   const { deleteRole, updateRolePermissions, fetchRoles } = useRoleStore()
   const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const { canUpdate, canDelete } = usePermissions()
 
   const handleEdit = (role: Role) => {
     setEditingRole(role)
@@ -64,6 +66,13 @@ export const useRoleColumns = () => {
       header: "Actions",
       cell: ({ row }) => {
         const role = row.original
+        const hasEditPermission = canUpdate('roles')
+        const hasDeletePermission = canDelete('roles')
+        
+        // Don't show actions column if user has no permissions
+        if (!hasEditPermission && !hasDeletePermission) {
+          return null
+        }
 
         return (
           <DropdownMenu>
@@ -74,14 +83,18 @@ export const useRoleColumns = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleEdit(role)}>
-                <IoCreate className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(role)} className="text-red-600">
-                <IoTrash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {hasEditPermission && (
+                <DropdownMenuItem onClick={() => handleEdit(role)}>
+                  <IoCreate className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {hasDeletePermission && (
+                <DropdownMenuItem onClick={() => handleDelete(role)} className="text-red-600">
+                  <IoTrash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )

@@ -5,7 +5,7 @@ CREATE TABLE `products` (
   `sku` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `purchase_price` decimal(10,2) DEFAULT 0.00,
   `category` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `status` enum('draft','paid','due') COLLATE utf8mb4_unicode_ci DEFAULT 'draft',
+  `status` enum('partial_paid','paid','due') COLLATE utf8mb4_unicode_ci DEFAULT 'paid',
   `quantity_in_stock` int(11) DEFAULT 0,
   `supplier` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),

@@ -59,14 +59,14 @@ export const useStockColumns = (onEditStock?: (stock: Stock) => void): ColumnDef
       },
     },
     {
-      accessorKey: "purchase_price",
-      header: "Purchase Price",
+      accessorKey: "sell_price",
+      header: "Sell Price",
       cell: ({ row }) => {
-        const cost = parseFloat(row.getValue("purchase_price"))
+        const price = parseFloat(row.getValue("sell_price"))
         const formatted = new Intl.NumberFormat("en-IN", {
           style: "currency",
           currency: "INR",
-        }).format(cost)
+        }).format(price)
         return <span className="font-medium">{formatted}</span>
       },
     },

@@ -10,7 +10,7 @@ CREATE TABLE `suppliers` (
   `zip` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
   `country` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'INDIA',
   `gstin` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `category` enum('Electronics','Home Appliances','Fashion','Books','Sports','Health','Beauty','Automotive','Food','Other') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Other',
+  `category` varchar(100) COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
   `website` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` enum('active','inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT current_timestamp(),

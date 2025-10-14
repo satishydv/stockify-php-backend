@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleTable } from '@/components/RoleTable'
 import RoleDialog from '@/components/RoleDialog'
 import { useRoleStore } from '@/stores/roleStore'
+import { usePermissions } from '@/hooks/usePermissions'
 
 const page = () => {
   const { roles, fetchRoles, isLoading } = useRoleStore()
+  const { canCreate } = usePermissions()
 
   useEffect(() => {
     fetchRoles()
@@ -22,7 +24,7 @@ const page = () => {
             <p className="text-sm text-slate-600">{roles.length} roles</p>
           </div>
         </div>
-        <RoleDialog />
+        {canCreate('roles') && <RoleDialog />}
       </CardHeader>
       <CardContent>
         {isLoading ? (

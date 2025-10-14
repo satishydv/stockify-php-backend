@@ -14,6 +14,8 @@ type CompanySettings = {
   email: string
   address: string
   logo_path?: string | null
+  header_image_path?: string | null
+  footer_image_path?: string | null
 }
 
 export default function SetupPage() {
@@ -23,8 +25,12 @@ export default function SetupPage() {
     email: "",
     address: "",
     logo_path: "",
+    header_image_path: "",
+    footer_image_path: "",
   })
   const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [headerFile, setHeaderFile] = useState<File | null>(null)
+  const [footerFile, setFooterFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   // Load existing settings (row id=1 convention)
@@ -42,6 +48,8 @@ export default function SetupPage() {
             email: data.settings.email || "",
             address: data.settings.address || "",
             logo_path: data.settings.logo_path || "",
+            header_image_path: data.settings.header_image_path || "",
+            footer_image_path: data.settings.footer_image_path || "",
           })
         }
       } catch (_) {
@@ -60,6 +68,16 @@ export default function SetupPage() {
     setLogoFile(file)
   }
 
+  const handleHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    setHeaderFile(file)
+  }
+
+  const handleFooterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    setFooterFile(file)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.company_name) {
@@ -75,6 +93,8 @@ export default function SetupPage() {
       if (form.email) fd.append("email", form.email)
       if (form.address) fd.append("address", form.address)
       if (logoFile) fd.append("logo", logoFile) // backend saves under public/setup and returns relative path
+      if (headerFile) fd.append("header_image", headerFile) // backend public/header
+      if (footerFile) fd.append("footer_image", footerFile) // backend public/footer
 
       // If row exists, backend can upsert by id=1
       if (form.id) fd.append("id", String(form.id))
@@ -91,7 +111,13 @@ export default function SetupPage() {
 
       // reflect saved values
       if (data?.settings) {
-        setForm((prev) => ({ ...prev, id: data.settings.id, logo_path: data.settings.logo_path || prev.logo_path }))
+        setForm((prev) => ({
+          ...prev,
+          id: data.settings.id,
+          logo_path: data.settings.logo_path || prev.logo_path,
+          header_image_path: data.settings.header_image_path || prev.header_image_path,
+          footer_image_path: data.settings.footer_image_path || prev.footer_image_path,
+        }))
       }
       alert("Company settings saved")
     } catch (err: any) {
@@ -162,7 +188,7 @@ export default function SetupPage() {
           </Card>
         </div>
 
-        {/* Right: Logo */}
+        {/* Right: Brand assets */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -174,6 +200,20 @@ export default function SetupPage() {
                 <Input id="logo" type="file" accept="image/*" onChange={handleFileChange} />
                 {form.logo_path && (
                   <p className="text-sm text-gray-500 mt-2">Current: {form.logo_path}</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="headerImage">Receipt header image</Label>
+                <Input id="headerImage" type="file" accept="image/*" onChange={handleHeaderChange} />
+                {form.header_image_path && (
+                  <p className="text-sm text-gray-500 mt-2">Current: {form.header_image_path}</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="footerImage">Receipt footer image</Label>
+                <Input id="footerImage" type="file" accept="image/*" onChange={handleFooterChange} />
+                {form.footer_image_path && (
+                  <p className="text-sm text-gray-500 mt-2">Current: {form.footer_image_path}</p>
                 )}
               </div>
               <Separator />

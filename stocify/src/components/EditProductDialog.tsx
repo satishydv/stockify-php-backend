@@ -267,7 +267,7 @@ export default function EditProductDialog({ product, isOpen, onClose }: EditProd
             >
               <option value="paid">Paid</option>
               <option value="due">Due</option>
-              <option value="draft">Draft</option>
+              <option value="partial_paid">Partial Paid</option>
             </select>
           </div>
 

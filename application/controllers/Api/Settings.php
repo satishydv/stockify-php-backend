@@ -52,6 +52,34 @@ class Settings extends CI_Controller {
             }
         }
 
+        // Handle header image upload (save under public/header)
+        if (!empty($_FILES['header_image']['name'])) {
+            $upload_dir = FCPATH . 'public/header/';
+            if (!is_dir($upload_dir)) {
+                @mkdir($upload_dir, 0755, true);
+            }
+            $ext = pathinfo($_FILES['header_image']['name'], PATHINFO_EXTENSION);
+            $safe = 'header_' . time() . '.' . strtolower($ext);
+            $target = $upload_dir . $safe;
+            if (move_uploaded_file($_FILES['header_image']['tmp_name'], $target)) {
+                $data['header_image_path'] = 'header/' . $safe; // relative to public/
+            }
+        }
+
+        // Handle footer image upload (save under public/footer)
+        if (!empty($_FILES['footer_image']['name'])) {
+            $upload_dir = FCPATH . 'public/footer/';
+            if (!is_dir($upload_dir)) {
+                @mkdir($upload_dir, 0755, true);
+            }
+            $ext = pathinfo($_FILES['footer_image']['name'], PATHINFO_EXTENSION);
+            $safe = 'footer_' . time() . '.' . strtolower($ext);
+            $target = $upload_dir . $safe;
+            if (move_uploaded_file($_FILES['footer_image']['tmp_name'], $target)) {
+                $data['footer_image_path'] = 'footer/' . $safe; // relative to public/
+            }
+        }
+
         $saved = $this->Settings_model->upsert_settings($data);
         $this->output->set_content_type('application/json')->set_output(json_encode([
             'success' => true,

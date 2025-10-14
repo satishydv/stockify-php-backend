@@ -133,7 +133,7 @@ function LoginPage() {
   }
 
   return (
-    <div className='relative w-full h-screen flex justify-center flex-col'>
+    <div className='relative w-full h-screen flex justify-center flex-col bg-white'>
     <div className='w-[90%] md:w-[80%] mx-auto items-center grid grid-cols-1 md:grid-cols-2 gap-10'>
     {/* Text content */}
     <div>
@@ -148,20 +148,20 @@ function LoginPage() {
             className="rounded-sm"
           />
         </div>
-        <span className="text-3xl font-bold text-gray-900 dark:text-yellow-500">Inventory</span>
+        <span className="text-3xl font-bold text-gray-900">Inventory</span>
       </div>
     
     <div className='flex flex-col gap-6'>
-      <h1 className='text-3xl md:text-4xl lg:text-5xl font-extrabold text-black dark:text-white sm:leading-[2.5rem] md:leading-[4.5rem]'>
+      <h1 className='text-3xl md:text-4xl lg:text-5xl font-extrabold text-black sm:leading-[2.5rem] md:leading-[4.5rem]'>
         Welcome, {" "} <span className='text-blue-400'>Back</span>
       </h1>
-      <p className='text-gray-600 dark:text-white text-xl md:text-base font-medium'>
+      <p className='text-gray-600 text-xl md:text-base font-medium'>
           A whole new experience of managing your stocks
       </p>
       
       {/* Login Form */}
       <div className="w-full max-w-md">
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg p-2 space-y-8">
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg p-2 space-y-8">
           {/* Error Message */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -177,7 +177,7 @@ function LoginPage() {
               value={formData.email}
               onChange={handleInputChange}
               placeholder="Enter your email address"
-              className={`w-full px-4 py-3 border rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              className={`w-full px-4 py-3 border rounded-lg bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 validationErrors.email ? 'border-red-500' : 'border-gray-200'
               }`}
             />
@@ -229,15 +229,15 @@ function LoginPage() {
                 onChange={handleInputChange}
                 className="w-4 h-4 text-blue-600 bg-gray-100"
               />
-              <span className="ml-2 text-sm text-gray-700 dark:text-white">Keep me login</span>
+              <span className="ml-2 text-sm text-gray-700">Keep me login</span>
             </label>
-            <button
+            {/* <button
               type="button"
               onClick={handleForgotPassword}
-              className="text-sm text-gray-700 hover:text-blue-600 dark:text-white"
+              className="text-sm text-gray-700 hover:text-blue-600"
             >
               Recovery Password
-            </button>
+            </button> */}
           </div>
 
           {/* Sign In Button */}

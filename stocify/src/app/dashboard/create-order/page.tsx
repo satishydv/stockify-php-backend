@@ -29,6 +29,7 @@ import { useOrderStore } from "@/stores/orderStore"
 import { Product } from "@/lib/product-data"
 import { Tax } from "@/stores/taxStore"
 import { IoAdd, IoRemove, IoSearch, IoTrash, IoCheckmark, IoCard, IoCash, IoCloudUpload, IoWallet } from "react-icons/io5"
+import { toast } from "sonner"
 
 interface CartItem {
   product: Product
@@ -70,7 +71,7 @@ export default function CreateOrderPage() {
     paymentMethod: "",
     transactionId: "",
     paymentAttachment: null,
-    status: "in_progress"
+    status: "due"
   })
 
   // Fetch data on component mount
@@ -100,12 +101,20 @@ export default function CreateOrderPage() {
     const existingItem = cart.find(item => item.product.id === product.id)
     
     if (existingItem) {
+      if (existingItem.quantity + 1 > product.quantityInStock) {
+        toast.error(`Only ${product.quantityInStock} in stock for ${product.name}`)
+        return
+      }
       setCart(cart.map(item =>
         item.product.id === product.id
           ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * product.sell_price }
           : item
       ))
     } else {
+      if (product.quantityInStock <= 0) {
+        toast.error(`${product.name} is out of stock`)
+        return
+      }
       setCart([...cart, {
         product,
         quantity: 1,
@@ -121,10 +130,18 @@ export default function CreateOrderPage() {
       return
     }
     
-    setCart(cart.map(item =>
-      item.product.id === productId
-        ? { ...item, quantity: newQuantity, subtotal: newQuantity * item.product.sell_price }
-        : item
+    const item = cart.find(ci => ci.product.id === productId)
+    if (!item) return
+
+    if (newQuantity > item.product.quantityInStock) {
+      toast.error(`Only ${item.product.quantityInStock} in stock for ${item.product.name}`)
+      return
+    }
+
+    setCart(cart.map(ci =>
+      ci.product.id === productId
+        ? { ...ci, quantity: newQuantity, subtotal: newQuantity * ci.product.sell_price }
+        : ci
     ))
   }
 
@@ -172,15 +189,7 @@ export default function CreateOrderPage() {
 
   // Submit order with payment
   const handleSubmitOrder = async () => {
-    if (!paymentForm.paymentMethod) {
-      alert("Please select a payment method")
-      return
-    }
-
-    if (paymentForm.paymentMethod === 'upi' && !paymentForm.transactionId) {
-      alert("Please enter transaction ID for UPI payment")
-      return
-    }
+    // All payment fields are optional; default status is 'due'.
 
     try {
       // Create FormData for file upload and order data
@@ -198,9 +207,11 @@ export default function CreateOrderPage() {
       formData.append('tax_amount', taxAmount.toFixed(2))
       formData.append('total_amount', grossAmount.toFixed(2))
 
-      // Append payment details
-      formData.append('payment_method', paymentForm.paymentMethod)
-      formData.append('status', paymentForm.status)
+      // Append payment details (optional). Always send status (defaults to 'due').
+      if (paymentForm.paymentMethod) {
+        formData.append('payment_method', paymentForm.paymentMethod)
+      }
+      formData.append('status', paymentForm.status || 'due')
       if (paymentForm.transactionId) {
         formData.append('transaction_id', paymentForm.transactionId)
       }
@@ -261,7 +272,7 @@ export default function CreateOrderPage() {
         paymentMethod: "",
         transactionId: "",
         paymentAttachment: null,
-        status: "in_progress"
+        status: "due"
       })
       setIsPaymentDialogOpen(false)
 
@@ -331,9 +342,7 @@ export default function CreateOrderPage() {
                     <div className="flex items-center gap-3">
                       <div className="text-right">
                         <p className="font-medium text-gray-900">₹{product.sell_price}</p>
-                        <Badge variant={product.status === 'paid' ? 'default' : 'secondary'}>
-                          {product.status}
-                        </Badge>
+                        {/* Removed payment status badge per requirement */}
                       </div>
                       <Button
                         onClick={() => addToCart(product)}
@@ -649,10 +658,10 @@ export default function CreateOrderPage() {
                         <SelectValue placeholder="Choose order status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="in_progress">
+                        <SelectItem value="partial_paid">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                            In Progress
+                            Partial Paid
                           </div>
                         </SelectItem>
                         <SelectItem value="paid">

@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserTable } from '@/components/UserTable'
 import UserDialog from '@/components/UserDialog'
 import { useUserStore } from '@/stores/userStore'
+import { usePermissions } from '@/hooks/usePermissions'
 
 const page = () => {
   const { users, fetchUsers, isLoading } = useUserStore()
+  const { canCreate } = usePermissions()
 
   useEffect(() => {
     fetchUsers()
@@ -22,7 +24,7 @@ const page = () => {
             <p className="text-sm text-slate-600">{users.length} users</p>
           </div>
         </div>
-        <UserDialog />
+        {canCreate('users') && <UserDialog />}
       </CardHeader>
       <CardContent>
         {isLoading ? (

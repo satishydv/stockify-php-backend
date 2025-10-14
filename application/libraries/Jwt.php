@@ -6,7 +6,8 @@ class Jwt {
     private $secret;
     
     public function __construct() {
-        $this->secret = 'your_jwt_secret_key_here'; // Change this to a secure secret
+        $CI =& get_instance();
+        $this->secret = $CI->config->item('jwt_secret') ?: 'your_jwt_secret_key_here'; // Fallback to default
     }
     
     public function encode($payload, $secret = null) {

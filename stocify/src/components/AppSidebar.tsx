@@ -50,57 +50,68 @@ import {
   CollapsibleTrigger,
 } from "./ui/collapsible";
 import { apiClient } from "@/lib/api";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const itemsBeforeSells = [
   {
     title: "Home",
     url: "/",
     icon: Home,
+    permission: null, // No permission required for home
   },
   {
     title: "Setup",
     url: "/dashboard/setup",
     icon: Settings,
+    permission: "setup:read",
   },
   {
     title: "Roles",
     url: "/dashboard/roles",
     icon: Shield,
+    permission: "roles:read",
   },
   {
     title: "Users",
     url: "/dashboard/users",
     icon: Users,
+    permission: "users:read",
   },
   {
     title: "Branches",
     url: "/dashboard/branches",
     icon: Building,
+    permission: "branch:read",
   },
   {
     title: "Taxes",
     url: "/dashboard/taxes",
     icon: Percent,
+    permission: "taxes:read",
   },
   {
     title: "Suppliers",
     url: "/dashboard/suppliers",
     icon: Truck,
+    permission: "suppliers:read",
   },
   {
     title: "Categories",
     url: "/dashboard/categories",
     icon: List,
+    permission: "categories:read",
   },
   {
     title: "Products",
     url: "/dashboard/products",
     icon: Box,
+    permission: "products:read",
   },
   {
     title: "Stocks",
     url: "/dashboard/stocks",
     icon: Warehouse,
+    permission: "stocks:read",
   },
   
 ];
@@ -110,11 +121,13 @@ const reportsSubItems = [
     title: "Sell Report",
     url: "/dashboard/sells",
     icon: FileText,
+    permission: "reports:read",
   },
   {
     title: "Vendor Report",
     url: "/dashboard/vendor-report",
     icon: Truck,
+    permission: "reports:read",
   },
   // {
   //   title: "Loss/Profit",
@@ -125,6 +138,7 @@ const reportsSubItems = [
     title: "Return",
     url: "/dashboard/return",
     icon: ArrowLeft,
+    permission: "reports:read",
   },
 ];
 
@@ -132,12 +146,37 @@ const AppSidebar = () => {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
+  const { canRead, hasPermission, loading: permissionsLoading, canCreate, canUpdate } = usePermissions();
 
   const isActive = (url: string) => {
     if (!pathname) return false;
     if (url === "/") return pathname === "/";
     return pathname === url || pathname.startsWith(url + "/");
   };
+
+  // Helper function to check if user has permission for a menu item
+  const hasMenuPermission = (permission: string | null) => {
+    if (!permission) return true; // No permission required
+    const [module, action] = permission.split(':');
+    return hasPermission(module, action as 'create' | 'read' | 'update' | 'delete');
+  };
+
+  // Filter menu items based on permissions
+  const filteredMainItems = itemsBeforeSells.filter(item => hasMenuPermission(item.permission));
+  const filteredReportsItems = reportsSubItems.filter(item => hasMenuPermission(item.permission));
+  
+  // Check if user has permission for orders (Sells section)
+  const hasSalesPermission = canRead('orders');
+  const hasReportsPermission = canRead('reports');
+  
+  // Debug logging
+  console.log('🔍 AppSidebar permissions check:', {
+    hasSalesPermission,
+    hasReportsPermission,
+    canReadOrders: canRead('orders'),
+    canReadReports: canRead('reports'),
+    permissionsLoading
+  });
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -187,7 +226,7 @@ const AppSidebar = () => {
           <SidebarGroupLabel className="text-black/80 dark:text-yellow-400">Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {itemsBeforeSells.map((item) => (
+              {filteredMainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
@@ -208,101 +247,111 @@ const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
         
-        {/* Sells Collapsible Section */}
-        <Collapsible className="group/collapsible">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="text-black hover:bg-black/10 dark:text-white">
-                  <ShoppingCart />
-                  <span>Sells</span>
-                  <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-            </SidebarMenuItem>
-            <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+        {/* Sells Collapsible Section - Only show if user has sales/orders permissions */}
+        {hasSalesPermission && (
+          <Collapsible className="group/collapsible">
+            <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className={`${
-                    isActive("/dashboard/create-order")
-                      ? "bg-black text-yellow-400 rounded-md"
-                      : "text-black hover:bg-black/10 dark:text-white"
-                  }`}
-                >
-                  <Link href="/dashboard/create-order">
-                    <Plus />
-                    Create Sells
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className={`${
-                    isActive("/dashboard/orders")
-                      ? "bg-black text-yellow-400 rounded-md"
-                      : "text-black hover:bg-black/10 dark:text-white"
-                  }`}
-                >
-                  <Link href="/dashboard/orders">
-                    <List />
-                    Manage Sells
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className={`${
-                    isActive("/dashboard/return-order")
-                      ? "bg-black text-yellow-400 rounded-md"
-                      : "text-black hover:bg-black/10 dark:text-white "
-                  }`}
-                >
-                  <Link href="/dashboard/return-order">
-                    <ArrowLeft />
-                    Return Sell
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </CollapsibleContent>
-          </SidebarMenu>
-        </Collapsible>
-        
-        {/* Reports Collapsible Section */}
-        <Collapsible className="group/collapsible">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="text-black hover:bg-black/10 dark:text-white">
-                  <ChartBar />
-                  <span>Reports</span>
-                  <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-            </SidebarMenuItem>
-            <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-              {reportsSubItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    className={`${
-                      isActive(item.url)
-                        ? "bg-black text-yellow-400 rounded-md p-2"
-                        : "text-black hover:bg-black/10 dark:text-white"
-                    }`}
-                  >
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="text-black hover:bg-black/10 dark:text-white">
+                    <ShoppingCart />
+                    <span>Sells</span>
+                    <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </CollapsibleContent>
-          </SidebarMenu>
-        </Collapsible>
+                </CollapsibleTrigger>
+              </SidebarMenuItem>
+              <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                {canCreate('orders') && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      className={`${
+                        isActive("/dashboard/create-order")
+                          ? "bg-black text-yellow-400 rounded-md"
+                          : "text-black hover:bg-black/10 dark:text-white"
+                      }`}
+                    >
+                      <Link href="/dashboard/create-order">
+                        <Plus />
+                        Create Sells
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {canUpdate('orders') && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      className={`${
+                        isActive("/dashboard/orders")
+                          ? "bg-black text-yellow-400 rounded-md"
+                          : "text-black hover:bg-black/10 dark:text-white"
+                      }`}
+                    >
+                      <Link href="/dashboard/orders">
+                        <List />
+                        Manage Sells
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {canUpdate('orders') && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      className={`${
+                        isActive("/dashboard/return-order")
+                          ? "bg-black text-yellow-400 rounded-md"
+                          : "text-black hover:bg-black/10 dark:text-white "
+                      }`}
+                    >
+                      <Link href="/dashboard/return-order">
+                        <ArrowLeft />
+                        Return Sell
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </CollapsibleContent>
+            </SidebarMenu>
+          </Collapsible>
+        )}
+        
+        {/* Reports Collapsible Section - Only show if user has reports permissions */}
+        {hasReportsPermission && (
+          <Collapsible className="group/collapsible">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="text-black hover:bg-black/10 dark:text-white">
+                    <ChartBar />
+                    <span>Reports</span>
+                    <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+              </SidebarMenuItem>
+              <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                {filteredReportsItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      className={`${
+                        isActive(item.url)
+                          ? "bg-black text-yellow-400 rounded-md p-2"
+                          : "text-black hover:bg-black/10 dark:text-white"
+                      }`}
+                    >
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </CollapsibleContent>
+            </SidebarMenu>
+          </Collapsible>
+        )}
         
       </SidebarContent>
       <SidebarFooter>

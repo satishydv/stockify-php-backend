@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProductTable } from '@/components/ProductTable'
 import ProductDialog from '@/components/ProductDialog'
 import { useProductStore } from '@/stores/productStore'
+import { usePermissions } from '@/hooks/usePermissions'
 
 const page = () => {
   const { products } = useProductStore()
+  const { canCreate } = usePermissions()
   
   return (
     <Card className="mt-1 flex flex-col shadow-none poppins border-none">
@@ -18,7 +20,7 @@ const page = () => {
             <p className="text-sm text-slate-600">{products.length} products</p>
           </div>
         </div>
-        <ProductDialog />
+        {canCreate('products') && <ProductDialog />}
       </CardHeader>
       <CardContent>
         <ProductTable />

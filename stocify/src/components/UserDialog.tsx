@@ -157,7 +157,7 @@ export default function UserDialog() {
               <div className="relative">
                 <Input
                   id="user-name"
-                  placeholder="John Smith..."
+                  placeholder="Enter user's name..."
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   className={errors.name ? "border-red-500" : ""}
@@ -183,7 +183,7 @@ export default function UserDialog() {
               <Input
                 id="email"
                 type="email"
-                placeholder="john.smith@company.com"
+                placeholder="Enter email..."
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 className={errors.email ? "border-red-500" : ""}

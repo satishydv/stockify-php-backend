@@ -25,7 +25,7 @@ $config['jwt_expires_in'] = '7d';
 // Application Configuration
 $config['app_env'] = 'development';
 $config['app_debug'] = true;
-$config['app_url'] = 'https://satishinventory.kesug.com';
+$config['app_url'] = 'http://localhost/inventory';
 
 // CORS Configuration
 $config['cors_allow_origin'] = '*';

@@ -148,10 +148,8 @@ class Orders extends CI_Controller {
                     throw new Exception("Failed to create order items");
                 }
 
-                // Decrease stock quantities only if status is 'paid'
-                if ($order_data['status'] === 'paid') {
-                    $this->Order_model->decrease_stock_for_order($order_items_data);
-                }
+                // Decrease stock quantities regardless of order status
+                $this->Order_model->decrease_stock_for_order($order_items_data);
 
                 if ($this->db->trans_status() === FALSE) {
                     $this->db->trans_rollback();
@@ -395,11 +393,8 @@ class Orders extends CI_Controller {
                     throw new Exception("Failed to update order items");
                 }
 
-                // If status is paid, decrease stock
-                $final_status = $order_data['status'];
-                if ($final_status === 'paid') {
-                    $this->Order_model->decrease_stock_for_order($order_items_data);
-                }
+                // Decrease stock quantities regardless of order status
+                $this->Order_model->decrease_stock_for_order($order_items_data);
 
                 if ($this->db->trans_status() === FALSE) {
                     $dbErr = $this->db->error();

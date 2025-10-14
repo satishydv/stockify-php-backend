@@ -24,11 +24,11 @@ const STATUS_OPTIONS = [
     iconColor: 'text-red-600'
   },
   {
-    id: 'draft',
-    label: 'Draft',
+    id: 'partial_paid',
+    label: 'Partial Paid',
     icon: IoMail,
-    color: 'bg-muted text-muted-foreground',
-    iconColor: 'text-muted-foreground'
+    color: 'bg-yellow-100 text-yellow-700',
+    iconColor: 'text-yellow-600'
   }
 ]
 

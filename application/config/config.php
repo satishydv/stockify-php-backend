@@ -23,7 +23,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'https://satishinventory.kesug.com/';
+$config['base_url'] = 'http://localhost/inventory/';
+
+/*
+|--------------------------------------------------------------------------
+| JWT Secret Key
+|--------------------------------------------------------------------------
+|
+| Secret key for JWT token signing and verification
+|
+*/
+$config['jwt_secret'] = '819303189fb5e73d607f31202195035b';
 
 /*
 |--------------------------------------------------------------------------

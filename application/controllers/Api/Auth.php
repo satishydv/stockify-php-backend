@@ -36,12 +36,19 @@ class Auth extends CI_Controller {
             return;
         }
         
-        // Generate JWT token
+        // Get user permissions
+        $permissions = $this->User_model->get_user_permissions($user['id']);
+        
+        // Generate JWT token with permissions and unique identifiers to avoid duplicate tokens
         $payload = [
             'userId' => $user['id'],
             'email' => $user['email'],
             'firstName' => $user['first_name'],
             'lastName' => $user['last_name'],
+            'permissions' => $permissions,
+            // iat: issued-at timestamp, jti: unique token id to ensure uniqueness per login
+            'iat' => time(),
+            'jti' => bin2hex(random_bytes(16)),
             'exp' => time() + (7 * 24 * 60 * 60) // 7 days
         ];
         
@@ -151,6 +158,42 @@ class Auth extends CI_Controller {
                 ->set_content_type('application/json')
                 ->set_output(json_encode([
                     'message' => 'Invalid token'
+                ]));
+        }
+    }
+    
+    // Debug endpoint to check JWT token contents
+    public function debug_token() {
+        $token = $this->get_bearer_token();
+        
+        if (!$token) {
+            $this->output
+                ->set_status_header(401)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'message' => 'Token required'
+                ]));
+            return;
+        }
+        
+        try {
+            $decoded = $this->jwt->decode($token, $this->config->item('jwt_secret'));
+            
+            $this->output
+                ->set_status_header(200)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'token_contents' => $decoded,
+                    'has_permissions' => isset($decoded->permissions),
+                    'permissions' => $decoded->permissions ?? 'No permissions found'
+                ]));
+        } catch (Exception $e) {
+            $this->output
+                ->set_status_header(401)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'message' => 'Invalid token',
+                    'error' => $e->getMessage()
                 ]));
         }
     }

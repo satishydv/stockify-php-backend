@@ -168,7 +168,7 @@ class Order_model extends CI_Model {
         return TRUE;
     }
 
-    // Decrease stock quantities for fulfilled orders
+    // Decrease stock quantities atomically and block overselling
     public function decrease_stock_for_order($items) {
         foreach ($items as $item) {
             if (!isset($item['quantity'])) {
@@ -178,19 +178,31 @@ class Order_model extends CI_Model {
             $qty = (int)$item['quantity'];
             if ($qty <= 0) continue;
 
-            // Prefer matching by SKU if available, otherwise fall back to product_id via products table
+            // Resolve SKU either directly from item or via product_id
+            $sku = '';
             if (!empty($item['product_sku'])) {
-                $this->db->set('quantity_available', 'GREATEST(quantity_available - ' . $qty . ', 0)', FALSE);
-                $this->db->where('sku', $item['product_sku']);
-                $this->db->update('stocks');
+                $sku = $item['product_sku'];
             } elseif (!empty($item['product_id'])) {
-                // Find SKU by product_id
                 $product = $this->db->get_where('products', ['id' => (int)$item['product_id']])->row_array();
                 if ($product && !empty($product['sku'])) {
-                    $this->db->set('quantity_available', 'GREATEST(quantity_available - ' . $qty . ', 0)', FALSE);
-                    $this->db->where('sku', $product['sku']);
-                    $this->db->update('stocks');
+                    $sku = $product['sku'];
                 }
+            }
+
+            if ($sku === '') {
+                // If we cannot resolve SKU, skip this item silently
+                continue;
+            }
+
+            // Atomic decrement only if enough quantity is available
+            $this->db->set('quantity_available', 'quantity_available - ' . $qty, FALSE);
+            $this->db->where('sku', $sku);
+            $this->db->where('quantity_available >=', $qty);
+            $this->db->update('stocks');
+
+            if ($this->db->affected_rows() === 0) {
+                // Not enough stock; throw to trigger transaction rollback
+                throw new Exception('Insufficient stock for SKU ' . $sku . ' (requested ' . $qty . ').');
             }
         }
         return TRUE;

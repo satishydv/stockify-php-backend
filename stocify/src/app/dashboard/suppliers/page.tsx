@@ -10,6 +10,7 @@ import { Download, ChevronDown, FileSpreadsheet, FileText, FileDown } from "luci
 import { useCSVExport } from "@/lib/useCSVExport"
 import { useExcelExport } from "@/lib/useExcelExport"
 import { usePDFExport } from "@/lib/usePDFExport"
+import { usePermissions } from '@/hooks/usePermissions'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +23,7 @@ const page = () => {
   const { exportToCSV, formatDate } = useCSVExport()
   const { exportToExcel, formatDate: formatDateExcel } = useExcelExport()
   const { exportToPDF, formatDate: formatDatePDF } = usePDFExport()
+  const { canCreate } = usePermissions()
 
   useEffect(() => {
     fetchSuppliers()
@@ -152,7 +154,7 @@ const page = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <AddSupplierDialog />
+            {canCreate('suppliers') && <AddSupplierDialog />}
           </div>
         </div>
       </CardHeader>

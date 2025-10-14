@@ -53,6 +53,9 @@ function DashboardContent({ children }: { children: ReactNode }) {
         <main className="w-full">
           <Navbar />
           <div className="px-4">{children}</div>
+          <footer className="fixed bottom-0 left-0 right-0 bg-blue-50 dark:bg-black text-gray-900 dark:text-white text-center py-3 z-0">
+              Powered by Alibros Infotech Pvt Ltd
+            </footer>
         </main>
       </SidebarProvider>
     </div>

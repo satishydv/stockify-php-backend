@@ -39,7 +39,7 @@ interface Return {
   customer_phone: string
   return_date: string
   total_return_amount: number | string
-  items: string // JSON string of ReturnItem[]
+  items: string | ReturnItem[] // Can be JSON string or array of ReturnItem[]
   status: string
   return_reason?: string
   created_at: string
@@ -65,6 +65,17 @@ const ReturnOrderPage = () => {
       if (response.ok) {
         const data = await response.json()
         console.log('Fetched returns data:', data.returns)
+        
+        // Debug: Log the first return's items structure
+        if (data.returns && data.returns.length > 0) {
+          console.log('First return items structure:', {
+            return_id: data.returns[0].return_id,
+            items: data.returns[0].items,
+            items_type: typeof data.returns[0].items,
+            items_is_array: Array.isArray(data.returns[0].items)
+          })
+        }
+        
         setReturns(data.returns || [])
       } else {
         console.error('Failed to fetch returns')
@@ -79,23 +90,53 @@ const ReturnOrderPage = () => {
 
   const formatCurrencyDisplay = (value: number | string) => `₹${(parseFloat(String(value)) || 0).toFixed(2)}`
 
-  const handlePrintReturn = (ret: Return) => {
+  const handlePrintReturn = async (ret: Return) => {
+    // Parse items - handle both string and array formats
     const items: ReturnItem[] = (() => {
-      try { return JSON.parse(ret.items || '[]') as ReturnItem[] } catch { return [] }
+      try {
+        // If items is already an array, use it directly
+        if (Array.isArray(ret.items)) {
+          return ret.items as ReturnItem[]
+        }
+        // If items is a string, parse it as JSON
+        if (typeof ret.items === 'string') {
+          return JSON.parse(ret.items || '[]') as ReturnItem[]
+        }
+        // Fallback to empty array
+        return []
+      } catch (error) {
+        console.error('Error parsing items:', error, 'Items data:', ret.items)
+        return []
+      }
     })()
+
+    console.log('Parsed items for return:', ret.return_id, items)
 
     const formatINR = (v: number | string) => `₹${(parseFloat(String(v)) || 0).toFixed(2)}`
     const dateStr = new Date(ret.return_date).toISOString()
     const dateDisplay = new Date(ret.return_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
-    const rowsHtml = items.map(it => `
+    const rowsHtml = items.length > 0 ? items.map(it => `
       <tr>
         <td>${it.product_name} <span style="color:#6B7280">(${it.product_sku})</span></td>
         <td class="right">${it.return_quantity}</td>
         <td class="right">${formatINR(it.unit_price)}</td>
         <td class="right">${formatINR(it.subtotal)}</td>
       </tr>
-    `).join('')
+    `).join('') : '<tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">No items found</td></tr>'
+
+    // Fetch company settings for header/footer images (from Setup page)
+    let company: { header_image_path?: string; footer_image_path?: string } = {}
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/index.php/api/settings`)
+      if (res.ok) {
+        const data = await res.json()
+        company = data?.settings || {}
+      }
+    } catch (_) {}
+
+    const headerUrl = company.header_image_path ? `${process.env.NEXT_PUBLIC_API_URL}/public/${company.header_image_path}` : ''
+    const footerUrl = company.footer_image_path ? `${process.env.NEXT_PUBLIC_API_URL}/public/${company.footer_image_path}` : ''
 
     const html = `
 <!DOCTYPE html>
@@ -106,6 +147,8 @@ const ReturnOrderPage = () => {
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body { font-family: Arial, Helvetica, sans-serif; margin: 20px; color: #333; }
+      .header-img, .footer-img { width: 100%; max-height: 160px; object-fit: contain; }
+      .footer { margin-top: 16px; }
       .header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 20px; border-bottom:2px solid #333; padding-bottom:10px; }
       .title { font-size: 24px; font-weight: 700; }
       .meta { color:#666; font-size: 14px; }
@@ -122,10 +165,12 @@ const ReturnOrderPage = () => {
     </style>
   </head>
   <body>
+    ${headerUrl ? `<img class="header-img" src="${headerUrl}" alt="Header" />` : ''}
+    ${headerUrl ? '' : `
     <div class="header">
       <div class="title">RETURN BILL</div>
       <div class="meta">Generated: ${new Date(dateStr).toLocaleDateString('en-GB')}</div>
-    </div>
+    </div>`}
     <div class="card">
       <div class="grid">
         <div>
@@ -170,6 +215,7 @@ const ReturnOrderPage = () => {
         <button onclick="window.print()" style="padding:8px 12px; background:#111827; color:#fff; border:none; border-radius:6px;">Print</button>
       </div>
     </div>
+    ${footerUrl ? `<div class="footer"><img class="footer-img" src="${footerUrl}" alt="Footer" /></div>` : ''}
   </body>
 </html>`
 

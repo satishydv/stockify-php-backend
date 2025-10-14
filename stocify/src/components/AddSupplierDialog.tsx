@@ -45,7 +45,7 @@ const initialFormData: SupplierFormData = {
   city: "",
   state: "",
   zip: "",
-  country: "USA",
+  country: "India",
   gstin: "",
   category: "",
   website: "",
@@ -211,7 +211,7 @@ export default function AddSupplierDialog() {
                 <Label htmlFor="supplier-phone">Phone Number</Label>
                 <Input
                   id="supplier-phone"
-                  placeholder="+1-555-0123"
+                  placeholder="+91 9876543210"
                   value={formData.phone}
                   onChange={(e) => handleInputChange("phone", e.target.value)}
                   className={errors.phone ? "border-red-500" : ""}
@@ -278,7 +278,7 @@ export default function AddSupplierDialog() {
                 <Label htmlFor="supplier-city">City</Label>
                 <Input
                   id="supplier-city"
-                  placeholder="New York"
+                  placeholder="Enter city..."
                   value={formData.city}
                   onChange={(e) => handleInputChange("city", e.target.value)}
                   className={errors.city ? "border-red-500" : ""}
@@ -295,7 +295,7 @@ export default function AddSupplierDialog() {
                 <Label htmlFor="supplier-zip">ZIP Code</Label>
                 <Input
                   id="supplier-zip"
-                  placeholder="10001"
+                  placeholder="Enter ZIP code..."
                   value={formData.zip}
                   onChange={(e) => handleInputChange("zip", e.target.value)}
                   className={errors.zip ? "border-red-500" : ""}
@@ -315,7 +315,7 @@ export default function AddSupplierDialog() {
                 <Label htmlFor="supplier-state">State</Label>
                 <Input
                   id="supplier-state"
-                  placeholder="NY"
+                  placeholder="Enter state..."
                   value={formData.state}
                   onChange={(e) => handleInputChange("state", e.target.value)}
                   className={errors.state ? "border-red-500" : ""}
@@ -332,7 +332,7 @@ export default function AddSupplierDialog() {
                 <Label htmlFor="supplier-country">Country</Label>
                 <Input
                   id="supplier-country"
-                  placeholder="USA"
+                  placeholder="India"
                   value={formData.country}
                   onChange={(e) => handleInputChange("country", e.target.value)}
                   className={errors.country ? "border-red-500" : ""}
@@ -356,7 +356,7 @@ export default function AddSupplierDialog() {
                 <Label htmlFor="supplier-gstin">GSTIN (Optional)</Label>
                 <Input
                   id="supplier-gstin"
-                  placeholder="29ABCDE1234F1Z5"
+                  placeholder="Enter GSTIN..."
                   value={formData.gstin}
                   onChange={(e) => handleInputChange("gstin", e.target.value)}
                 />

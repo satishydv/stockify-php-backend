@@ -31,9 +31,12 @@ class Return_model extends CI_Model {
         
         $returns = $query->result_array();
         
-        // Decode JSON items for each return
+        // Handle JSON items - MySQL JSON type may already be decoded
         foreach ($returns as &$return) {
-            $return['items'] = json_decode($return['items'], true);
+            if (is_string($return['items'])) {
+                $return['items'] = json_decode($return['items'], true);
+            }
+            // If it's already an array (MySQL JSON type), keep it as is
         }
         
         return $returns;
@@ -49,7 +52,9 @@ class Return_model extends CI_Model {
         
         if ($query->num_rows() > 0) {
             $return = $query->row_array();
-            $return['items'] = json_decode($return['items'], true);
+            if (is_string($return['items'])) {
+                $return['items'] = json_decode($return['items'], true);
+            }
             return $return;
         }
         
@@ -66,7 +71,9 @@ class Return_model extends CI_Model {
         
         if ($query->num_rows() > 0) {
             $return = $query->row_array();
-            $return['items'] = json_decode($return['items'], true);
+            if (is_string($return['items'])) {
+                $return['items'] = json_decode($return['items'], true);
+            }
             return $return;
         }
         
@@ -84,9 +91,11 @@ class Return_model extends CI_Model {
         
         $returns = $query->result_array();
         
-        // Decode JSON items for each return
+        // Handle JSON items - MySQL JSON type may already be decoded
         foreach ($returns as &$return) {
-            $return['items'] = json_decode($return['items'], true);
+            if (is_string($return['items'])) {
+                $return['items'] = json_decode($return['items'], true);
+            }
         }
         
         return $returns;
@@ -137,9 +146,11 @@ class Return_model extends CI_Model {
         
         $returns = $query->result_array();
         
-        // Decode JSON items for each return
+        // Handle JSON items - MySQL JSON type may already be decoded
         foreach ($returns as &$return) {
-            $return['items'] = json_decode($return['items'], true);
+            if (is_string($return['items'])) {
+                $return['items'] = json_decode($return['items'], true);
+            }
         }
         
         return $returns;
@@ -157,9 +168,11 @@ class Return_model extends CI_Model {
         
         $returns = $query->result_array();
         
-        // Decode JSON items for each return
+        // Handle JSON items - MySQL JSON type may already be decoded
         foreach ($returns as &$return) {
-            $return['items'] = json_decode($return['items'], true);
+            if (is_string($return['items'])) {
+                $return['items'] = json_decode($return['items'], true);
+            }
         }
         
         return $returns;
@@ -237,9 +250,11 @@ class Return_model extends CI_Model {
         
         $returns = $query->result_array();
         
-        // Decode JSON items for each return
+        // Handle JSON items - MySQL JSON type may already be decoded
         foreach ($returns as &$return) {
-            $return['items'] = json_decode($return['items'], true);
+            if (is_string($return['items'])) {
+                $return['items'] = json_decode($return['items'], true);
+            }
         }
         
         return $returns;

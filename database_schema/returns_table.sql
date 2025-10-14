@@ -13,6 +13,7 @@ CREATE TABLE `returns` (
   `items` json NOT NULL,
   `status` enum('pending','return','processed','refunded','cancelled') NOT NULL DEFAULT 'pending',
   `return_reason` text DEFAULT NULL,
+  `delete` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Soft delete flag: 0=active, 1=deleted',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -20,7 +21,8 @@ CREATE TABLE `returns` (
   KEY `idx_original_order_id` (`original_order_id`),
   KEY `idx_customer_phone` (`customer_phone`),
   KEY `idx_status` (`status`),
-  KEY `idx_return_date` (`return_date`)
+  KEY `idx_return_date` (`return_date`),
+  KEY `idx_delete` (`delete`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

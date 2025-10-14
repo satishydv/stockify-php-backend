@@ -176,6 +176,7 @@ class Products extends CI_Controller {
                 'maximum_stock_level' => 1000, // Default value
                 'status' => isset($input['status']) ? $input['status'] : 'paid',
                 'purchase_price' => $input['purchase_price'],
+                'sell_price' => isset($input['sell_price']) ? $input['sell_price'] : null,
                 'supplier' => $input['supplier']
             ];
             

@@ -169,11 +169,17 @@ class Dashboard extends CI_Controller {
     }
     
     private function getTotalPurchaseToday() {
-        // This would typically come from a purchases table
-        // For now, returning mock data
+        $today = date('Y-m-d');
+        // Sum of purchase_price of products added today
+        $this->db->select_sum('purchase_price');
+        $this->db->where('DATE(created_at)', $today);
+        $this->db->where('delete', 0);
+        $result = $this->db->get('products');
+        $total = $result->row()->purchase_price ?? 0;
+
         return [
-            'value' => 2500.00,
-            'change' => -2.1, // Mock data
+            'value' => (float)$total,
+            'change' => 0.0, // Placeholder; implement real MoM change if needed
             'label' => 'Total Purchase Today'
         ];
     }

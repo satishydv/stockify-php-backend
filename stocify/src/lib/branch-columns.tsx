@@ -14,11 +14,13 @@ import { IoCopy, IoCreate, IoTrash, IoEllipsisVertical } from "react-icons/io5"
 import { useState } from "react"
 import EditBranchDialog from "@/components/EditBranchDialog"
 import { toast } from "sonner"
+import { usePermissions } from "@/hooks/usePermissions"
 
 export const useBranchColumns = () => {
   const { deleteBranch } = useBranchStore()
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const { canUpdate, canDelete } = usePermissions()
 
   const handleCopy = (branch: Branch) => {
     const branchData = {
@@ -119,6 +121,13 @@ export const useBranchColumns = () => {
       header: "",
       cell: ({ row }) => {
         const branch = row.original
+        const hasEditPermission = canUpdate('branch')
+        const hasDeletePermission = canDelete('branch')
+        
+        // Don't show actions column if user has no permissions
+        if (!hasEditPermission && !hasDeletePermission) {
+          return null
+        }
 
         return (
           <DropdownMenu>
@@ -133,14 +142,18 @@ export const useBranchColumns = () => {
                 <IoCopy className="mr-2 h-4 w-4" />
                 Copy
               </DropdownMenuItem> */}
-              <DropdownMenuItem onClick={() => handleEdit(branch)}>
-                <IoCreate className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(branch)} className="text-red-600">
-                <IoTrash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {hasEditPermission && (
+                <DropdownMenuItem onClick={() => handleEdit(branch)}>
+                  <IoCreate className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {hasDeletePermission && (
+                <DropdownMenuItem onClick={() => handleDelete(branch)} className="text-red-600">
+                  <IoTrash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )

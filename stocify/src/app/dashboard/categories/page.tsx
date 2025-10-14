@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CategoryTable } from '@/components/CategoryTable'
 import AddCategoryDialog from '@/components/AddCategoryDialog'
 import { useCategoryStore } from '@/stores/categoryStore'
+import { usePermissions } from '@/hooks/usePermissions'
 
 const page = () => {
   const { categories, fetchCategories, isLoading } = useCategoryStore()
+  const { canCreate } = usePermissions()
 
   useEffect(() => {
     fetchCategories()
@@ -22,7 +24,7 @@ const page = () => {
             <p className="text-sm text-slate-600">{categories.length} categories</p>
           </div>
         </div>
-        <AddCategoryDialog />
+        {canCreate('categories') && <AddCategoryDialog />}
       </CardHeader>
       <CardContent>
         {isLoading ? (

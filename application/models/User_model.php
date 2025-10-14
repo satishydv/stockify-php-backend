@@ -72,6 +72,103 @@ class User_model extends CI_Model {
         return $query->row_array();
     }
     
+    public function get_user_permissions($user_id) {
+        // Get user's role and permissions
+        $this->db->select('r.permissions');
+        $this->db->from('users u');
+        $this->db->join('roles r', 'u.role_id = r.id', 'left');
+        $this->db->where('u.id', $user_id);
+        $this->db->where('u.delete', 0);
+        $this->db->where('r.delete', 0);
+        $query = $this->db->get();
+        
+        $result = $query->row_array();
+        
+        if ($result && !empty($result['permissions'])) {
+            return $this->parse_permissions_from_json($result['permissions']);
+        }
+        
+        // Return empty permissions if no role or permissions found
+        return $this->get_empty_permissions();
+    }
+    
+    /**
+     * Parse permissions JSON array back to object format
+     * Input: ["users:create", "users:read"]
+     * Output: {"users": {"create": true, "read": true, "update": false, "delete": false}}
+     */
+    private function parse_permissions_from_json($permissions_json) {
+        // Define baseline modules (extendable)
+        $all_modules = [
+            'dashboard', 'products', 'users', 'orders', 'stocks', 
+            'sales', 'reports', 'suppliers', 'categories',
+            'setup', 'taxes', 'branch', 'roles'
+        ];
+        
+        // Initialize permissions structure for all modules
+        $permissions = [];
+        foreach ($all_modules as $module) {
+            $permissions[$module] = [
+                'create' => false, 
+                'read' => false, 
+                'update' => false, 
+                'delete' => false
+            ];
+        }
+        
+        // Parse JSON if it exists
+        if (!empty($permissions_json)) {
+            $permission_array = json_decode($permissions_json, true);
+            
+            if (is_array($permission_array)) {
+                foreach ($permission_array as $permission) {
+                    if (strpos($permission, ':') !== false) {
+                        list($module, $action) = explode(':', $permission, 2);
+                        
+                        // If we encounter a module not in baseline, initialize it on the fly
+                        if (!isset($permissions[$module])) {
+                            $permissions[$module] = [
+                                'create' => false,
+                                'read' => false,
+                                'update' => false,
+                                'delete' => false,
+                            ];
+                        }
+                        
+                        if (isset($permissions[$module][$action])) {
+                            $permissions[$module][$action] = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return $permissions;
+    }
+    
+    /**
+     * Get empty permissions structure
+     */
+    private function get_empty_permissions() {
+        $all_modules = [
+            'dashboard', 'products', 'users', 'orders', 'stocks', 
+            'sales', 'reports', 'suppliers', 'categories',
+            'setup', 'taxes', 'branch', 'roles'
+        ];
+        
+        $permissions = [];
+        foreach ($all_modules as $module) {
+            $permissions[$module] = [
+                'create' => false, 
+                'read' => false, 
+                'update' => false, 
+                'delete' => false
+            ];
+        }
+        
+        return $permissions;
+    }
+    
     public function create_user($data) {
         $user_data = [
             'name' => $data['name'],
@@ -137,15 +234,17 @@ class User_model extends CI_Model {
     }
     
     public function create_session($user_id, $token) {
-        $session_data = [
-            'user_id' => $user_id,
-            'token' => $token,
-            'expires_at' => date('Y-m-d H:i:s', time() + (7 * 24 * 60 * 60)), // 7 days
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-        
-        $this->db->insert('sessions', $session_data);
-        return $this->db->insert_id();
+        $expires_at = date('Y-m-d H:i:s', time() + (7 * 24 * 60 * 60)); // 7 days
+        $created_at = date('Y-m-d H:i:s');
+
+        // Atomic upsert to avoid duplicate key errors if the same token arrives concurrently
+        $sql = "INSERT INTO `sessions` (`user_id`, `token`, `expires_at`, `created_at`)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE `user_id` = VALUES(`user_id`), `expires_at` = VALUES(`expires_at`), `created_at` = VALUES(`created_at`)";
+
+        $this->db->query($sql, [$user_id, $token, $expires_at, $created_at]);
+        // We don't strictly need the insert id for sessions; return true for success
+        return true;
     }
     
     public function delete_session($token) {

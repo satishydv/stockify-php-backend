@@ -21,7 +21,7 @@ function FilterArea() {
         <Separator orientation="vertical" />
         <div className="flex gap-2 items-center">
           <Badge variant={"secondary"}>New</Badge>
-          <Badge variant={"secondary"}>In Progress</Badge>
+          <Badge variant={"secondary"}>Partial Paid</Badge>
         </div>
       </div>
       {/* supplier */}

@@ -21,6 +21,7 @@ import {
 import { MoreHorizontal, Edit, Trash2 } from "lucide-react"
 import { useTaxStore, Tax } from '@/stores/taxStore'
 import { toast } from 'sonner'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface TaxTableProps {
   onEdit: (tax: Tax) => void
@@ -29,6 +30,7 @@ interface TaxTableProps {
 export const TaxTable: React.FC<TaxTableProps> = ({ onEdit }) => {
   const { taxes, deleteTax, toggleTaxStatus } = useTaxStore()
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const { canUpdate, canDelete } = usePermissions()
 
   const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this tax?')) {
@@ -110,28 +112,44 @@ export const TaxTable: React.FC<TaxTableProps> = ({ onEdit }) => {
                   {formatDate(tax.created_at)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEdit(tax)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => handleDelete(tax.id)}
-                        disabled={deletingId === tax.id}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        {deletingId === tax.id ? 'Deleting...' : 'Delete'}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {(() => {
+                    const hasEditPermission = canUpdate('taxes')
+                    const hasDeletePermission = canDelete('taxes')
+                    
+                    // Don't show actions if user has no permissions
+                    if (!hasEditPermission && !hasDeletePermission) {
+                      return null
+                    }
+
+                    return (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {hasEditPermission && (
+                            <DropdownMenuItem onClick={() => onEdit(tax)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          )}
+                          {hasDeletePermission && (
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(tax.id)}
+                              disabled={deletingId === tax.id}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {deletingId === tax.id ? 'Deleting...' : 'Delete'}
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )
+                  })()}
                 </TableCell>
               </TableRow>
             ))

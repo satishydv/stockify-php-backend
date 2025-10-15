@@ -161,8 +161,30 @@ class Suppliers extends CI_Controller {
             $update_data['name'] = $input['name'];
         }
         
-        if (isset($input['contactInfo'])) {
-            $update_data['contact_info'] = $input['contactInfo'];
+        // Basic fields sent by frontend
+        if (isset($input['email'])) {
+            $update_data['email'] = $input['email'];
+        }
+        if (isset($input['phone'])) {
+            $update_data['phone'] = $input['phone'];
+        }
+        if (isset($input['category'])) {
+            $update_data['category'] = $input['category'];
+        }
+        if (isset($input['gstin'])) {
+            $update_data['gstin'] = $input['gstin'];
+        }
+        if (isset($input['website'])) {
+            $update_data['website'] = $input['website'];
+        }
+        // Company location mapping
+        if (isset($input['companyLocation']) && is_array($input['companyLocation'])) {
+            $loc = $input['companyLocation'];
+            if (isset($loc['street'])) { $update_data['street'] = $loc['street']; }
+            if (isset($loc['city'])) { $update_data['city'] = $loc['city']; }
+            if (isset($loc['state'])) { $update_data['state'] = $loc['state']; }
+            if (isset($loc['zip'])) { $update_data['zip'] = $loc['zip']; }
+            if (isset($loc['country'])) { $update_data['country'] = $loc['country']; }
         }
         
         if (isset($input['status'])) {

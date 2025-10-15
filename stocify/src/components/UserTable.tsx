@@ -22,8 +22,8 @@ function FilterArea() {
           <Badge variant={"secondary"}>Manager</Badge>
         </div>
       </div>
-      {/* status */}
-      <div className="border-dashed border rounded-sm p-1 flex gap-2 items-center px-2 text-sm">
+      {/* status (hidden on mobile) */}
+      <div className="hidden sm:flex border-dashed border rounded-sm p-1 gap-2 items-center px-2 text-sm">
         <span className="text-gray-600">Status</span>
         <Separator orientation="vertical" />
         <div className="flex gap-2 items-center">
@@ -51,17 +51,17 @@ export function UserTable() {
             placeholder="Search by name..." 
             className="max-w-sm h-10"
           />
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm">
-              Role
-            </Button>
-            <Button variant="outline" size="sm">
-              Status
-            </Button>
-          </div>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm">
+            Role
+          </Button>
+          <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+            Status
+          </Button>
+        </div>
         </div>
         {/* filter area */}
-        <FilterArea />
+      <FilterArea />
       </div>
       {/* Users table */}
       <DataTable columns={columns} data={users} />

@@ -2,6 +2,7 @@
 
 import { LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -44,13 +45,20 @@ const Navbar = () => {
   return (
     <nav className="p-4 flex items-center justify-between sticky top-0 bg-blue-50 dark:bg-background z-10">
       {/* LEFT */}
-      <SidebarTrigger />
+      <div className="flex items-center gap-4">
+        <SidebarTrigger />
+        {/* LOGO - Only visible on mobile */}
+        <Link href="/" className="md:hidden flex items-center gap-2">
+          <Image src="/icon/icon.png" alt="logo" width={30} height={30} />
+          <span className="text-2xl font-bold text-yellow-500">Inventory</span>
+        </Link>
+      </div>
       {/* <Button variant="outline" onClick={toggleSidebar}>
         Custom Button
       </Button> */}
       {/* RIGHT */}
-      <ThemeSelector />
-      <div className="flex items-center gap-4">
+      <div className="hidden md:flex items-center gap-4">
+        <ThemeSelector />
         <Link href="/">Dashboard</Link>
         {/* THEME MENU */}
         <DropdownMenu>
@@ -73,40 +81,40 @@ const Navbar = () => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        {/* USER MENU */}
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Avatar>
-              <AvatarImage src="https://avatars.githubusercontent.com/u/1486366" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent sideOffset={10}>
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/profile">
-                <User className="h-[1.2rem] w-[1.2rem] mr-2" />
-                Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/change-pass">
-                <Settings className="h-[1.2rem] w-[1.2rem] mr-2" />
-                Change Password
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              variant="destructive"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              <LogOut className="h-[1.2rem] w-[1.2rem] mr-2" />
-              {isLoggingOut ? "Logging out..." : "Logout"}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
+      {/* USER MENU */}
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <Avatar>
+            <AvatarImage src="https://avatars.githubusercontent.com/u/1486366" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent sideOffset={10}>
+          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/profile">
+              <User className="h-[1.2rem] w-[1.2rem] mr-2" />
+              Profile
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/change-pass">
+              <Settings className="h-[1.2rem] w-[1.2rem] mr-2" />
+              Change Password
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            variant="destructive"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            <LogOut className="h-[1.2rem] w-[1.2rem] mr-2" />
+            {isLoggingOut ? "Logging out..." : "Logout"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </nav>
   );
 };

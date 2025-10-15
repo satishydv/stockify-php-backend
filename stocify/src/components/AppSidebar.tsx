@@ -33,6 +33,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from "./ui/sidebar";
 import Link from "next/link";
 import Image from "next/image";
@@ -51,6 +52,7 @@ import {
 } from "./ui/collapsible";
 import { apiClient } from "@/lib/api";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/hooks/useAuth";
 
 const itemsBeforeSells = [
   {
@@ -147,7 +149,8 @@ const AppSidebar = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
   const { canRead, hasPermission, loading: permissionsLoading, canCreate, canUpdate } = usePermissions();
-
+  const { setOpenMobile, isMobile } = useSidebar();
+  const { user } = useAuth();
   const isActive = (url: string) => {
     if (!pathname) return false;
     if (url === "/") return pathname === "/";
@@ -159,6 +162,13 @@ const AppSidebar = () => {
     if (!permission) return true; // No permission required
     const [module, action] = permission.split(':');
     return hasPermission(module, action as 'create' | 'read' | 'update' | 'delete');
+  };
+
+  // Function to handle menu item clicks and close sidebar on mobile
+  const handleMenuItemClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   // Filter menu items based on permissions
@@ -212,7 +222,7 @@ const AppSidebar = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="/">
+              <Link href="/" onClick={handleMenuItemClick}>
                 <Image src="/icon/icon.png" alt="logo" width={30} height={30} />
                 <span className="text-2xl font-bold text-yellow-500">Inventory</span>
               </Link>
@@ -236,7 +246,7 @@ const AppSidebar = () => {
                         : "text-black hover:bg-black/10 dark:text-white"
                     }`}
                   >
-                    <Link href={item.url}>
+                    <Link href={item.url} onClick={handleMenuItemClick}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -271,7 +281,7 @@ const AppSidebar = () => {
                           : "text-black hover:bg-black/10 dark:text-white"
                       }`}
                     >
-                      <Link href="/dashboard/create-order">
+                      <Link href="/dashboard/create-order" onClick={handleMenuItemClick}>
                         <Plus />
                         Create Sells
                       </Link>
@@ -288,7 +298,7 @@ const AppSidebar = () => {
                           : "text-black hover:bg-black/10 dark:text-white"
                       }`}
                     >
-                      <Link href="/dashboard/orders">
+                      <Link href="/dashboard/orders" onClick={handleMenuItemClick}>
                         <List />
                         Manage Sells
                       </Link>
@@ -305,7 +315,7 @@ const AppSidebar = () => {
                           : "text-black hover:bg-black/10 dark:text-white "
                       }`}
                     >
-                      <Link href="/dashboard/return-order">
+                      <Link href="/dashboard/return-order" onClick={handleMenuItemClick}>
                         <ArrowLeft />
                         Return Sell
                       </Link>
@@ -341,7 +351,7 @@ const AppSidebar = () => {
                           : "text-black hover:bg-black/10 dark:text-white"
                       }`}
                     >
-                      <Link href={item.url}>
+                      <Link href={item.url} onClick={handleMenuItemClick}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
@@ -360,15 +370,15 @@ const AppSidebar = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="text-black hover:bg-black/10 dark:text-white">
-                  <User2 /> Admin <ChevronUp className="ml-auto" />
+                  <User2 /> {user?.name} <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/profile">Profile</Link>
+                  <Link href="/dashboard/profile" onClick={handleMenuItemClick}>Profile</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/change-pass">Change Password</Link>
+                  <Link href="/dashboard/change-pass" onClick={handleMenuItemClick}>Change Password</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={handleLogout}

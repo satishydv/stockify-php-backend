@@ -7,7 +7,7 @@ import { apiClient } from "@/lib/api"
 interface UserStore {
   users: User[]
   isLoading: boolean
-  addUser: (user: Omit<User, "id" | "status">) => void
+  addUser: (user: { name: string; email: string; password: string; address: string; role_id: number }) => Promise<void>
   deleteUser: (id: string) => void
   updateUser: (id: string, updates: Partial<User>) => void
   fetchUsers: () => Promise<void>
@@ -18,16 +18,18 @@ export const useUserStore = create<UserStore>((set, get) => ({
   users: [],
   isLoading: false,
   
-  addUser: (newUser) => set((state) => ({
-    users: [
-      ...state.users,
-      {
-        ...newUser,
-        id: Date.now().toString(),
-        status: 'active' as const
-      }
-    ]
-  })),
+  addUser: async (newUser) => {
+    set({ isLoading: true })
+    try {
+      await apiClient.createUser(newUser)
+      // We only get userId back; refetch full list to sync
+      await get().fetchUsers()
+    } catch (error) {
+      console.error('Error creating user:', error)
+      set({ isLoading: false })
+      throw error
+    }
+  },
   
   deleteUser: (id) => set((state) => ({
     users: state.users.filter((user) => user.id !== id)

@@ -140,27 +140,27 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon, isCurre
 
   return (
     <Card className={`relative overflow-hidden border-0 ${styles.bg} ${styles.text}`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-white/90">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
+        <CardTitle className="text-xs sm:text-sm font-medium text-white/90">
           {title}
         </CardTitle>
-        <div className={`h-8 w-8 rounded-full ${styles.iconBg} flex items-center justify-center`}>
+        <div className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full ${styles.iconBg} flex items-center justify-center`}>
           {icon}
         </div>
       </CardHeader>
       <CardContent>
-        <div className={`text-2xl font-bold ${styles.text} mb-1`}>
+        <div className={`text-xl sm:text-2xl font-bold ${styles.text} mb-1`}>
           {formatValue(value)}
         </div>
-        <div className="flex items-center text-xs">
+        <div className="flex items-center text-[10px] sm:text-xs">
           <span className="flex items-center gap-1 text-white/80">
             {changeIcon}
             {Math.abs(change)}%
           </span>
           <span className={`ml-2 ${styles.changeText}`}>from last month</span>
         </div>
-        {/* Mini chart placeholder */}
-        <div className="absolute bottom-2 right-2 flex items-end gap-1 h-8">
+        {/* Mini chart placeholder (hide on very small screens) */}
+        <div className="hidden sm:flex absolute bottom-2 right-2 items-end gap-1 h-8">
           {[...Array(7)].map((_, i) => (
             <div
               key={i}
@@ -227,10 +227,10 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-3 sm:px-0">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-orange-400">Dashboard</h1>
-        <p className="text-gray-600 dark:text-blue-400">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-orange-400">Dashboard</h1>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-blue-400">
           {new Date().toLocaleDateString('en-US', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -240,12 +240,12 @@ const DashboardPage = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
         <StatCard
           title="Total Sales Today"
           value={stats.totalSalesToday.value}
           change={stats.totalSalesToday.change}
-          icon={<ShoppingCart className="w-4 h-4 text-white" />}
+          icon={<ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 text-white" />}
           isCurrency={true}
           cardColor="blue"
         />
@@ -254,7 +254,7 @@ const DashboardPage = () => {
           title="Total Suppliers"
           value={stats.totalSuppliers.value}
           change={stats.totalSuppliers.change}
-          icon={<Truck className="w-4 h-4 text-white" />}
+          icon={<Truck className="w-3 h-3 sm:w-4 sm:h-4 text-white" />}
           cardColor="green"
         />
         
@@ -262,7 +262,7 @@ const DashboardPage = () => {
           title="Total Products"
           value={stats.totalProducts.value}
           change={stats.totalProducts.change}
-          icon={<Package className="w-4 h-4 text-white" />}
+          icon={<Package className="w-3 h-3 sm:w-4 sm:h-4 text-white" />}
           cardColor="purple"
         />
         
@@ -270,7 +270,7 @@ const DashboardPage = () => {
           title="New Customers Today"
           value={stats.newCustomersToday.value}
           change={stats.newCustomersToday.change}
-          icon={<UserPlus className="w-4 h-4 text-white" />}
+          icon={<UserPlus className="w-3 h-3 sm:w-4 sm:h-4 text-white" />}
           cardColor="orange"
         />
         
@@ -278,7 +278,7 @@ const DashboardPage = () => {
           title="Total Customers"
           value={stats.totalCustomers.value}
           change={stats.totalCustomers.change}
-          icon={<Users className="w-4 h-4 text-white" />}
+          icon={<Users className="w-3 h-3 sm:w-4 sm:h-4 text-white" />}
           cardColor="teal"
         />
         
@@ -286,21 +286,28 @@ const DashboardPage = () => {
           title="Total Purchase Today"
           value={stats.totalPurchaseToday.value}
           change={stats.totalPurchaseToday.change}
-          icon={<DollarSign className="w-4 h-4 text-white" />}
+          icon={<DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-white" />}
           isCurrency={true}
           cardColor="indigo"
         />
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 ">
-      <ChartBarLabel/>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartRadialLabel/>
-        <ChartPieDonutText/>
-      </div>
-        
-        
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-6 sm:mt-8">
+        {/* Bar chart: allow horizontal scroll on small screens so full content is visible */}
+        <div className="w-full overflow-x-auto sm:overflow-visible max-w-full -mx-3 sm:mx-0 px-3">
+          <div className="min-w-[560px] sm:min-w-0">
+            <ChartBarLabel/>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="w-full overflow-hidden sm:overflow-visible max-w-full">
+            <ChartRadialLabel/>
+          </div>
+          <div className="w-full overflow-hidden sm:overflow-visible max-w-full">
+            <ChartPieDonutText/>
+          </div>
+        </div>
       </div>
     </div>
   )

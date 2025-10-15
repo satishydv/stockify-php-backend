@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useProductStore } from "@/stores/productStore"
+import { useStockStore } from "@/stores/stockStore"
 import { useTaxStore } from "@/stores/taxStore"
 import { useOrderStore } from "@/stores/orderStore"
 import { Product } from "@/lib/product-data"
@@ -53,7 +54,8 @@ interface PaymentForm {
 
 export default function CreateOrderPage() {
   const router = useRouter()
-  const { products, loading, fetchProducts } = useProductStore()
+  const { products, loading: loadingProducts, fetchProducts } = useProductStore()
+  const { productsFromStock, loading: loadingStocks, fetchStocksAsProducts } = useStockStore()
   const { taxes, fetchTaxes } = useTaxStore()
   const { addOrder } = useOrderStore()
   
@@ -76,9 +78,11 @@ export default function CreateOrderPage() {
 
   // Fetch data on component mount
   useEffect(() => {
+    // Load both stocks and products so we can map stock rows to real product IDs
+    fetchStocksAsProducts()
     fetchProducts()
     fetchTaxes()
-  }, [fetchProducts, fetchTaxes])
+  }, [fetchStocksAsProducts, fetchProducts, fetchTaxes])
 
   // Auto-select first enabled tax when taxes are loaded
   useEffect(() => {
@@ -91,7 +95,14 @@ export default function CreateOrderPage() {
   }, [taxes, selectedTax])
 
   // Filter products based on search query
-  const filteredProducts = products.filter(product =>
+  // Merge stock data with real product IDs by SKU to satisfy FK constraints
+  const mergedProducts: Product[] = (productsFromStock.length > 0 ? productsFromStock : []).map((s) => {
+    const match = products.find((p) => p.sku === s.sku)
+    return { ...s, id: match ? match.id : s.id }
+  })
+  const sourceProducts = mergedProducts.length > 0 ? mergedProducts : products
+  const loading = loadingStocks || loadingProducts
+  const filteredProducts = sourceProducts.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.sku.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -504,7 +515,7 @@ export default function CreateOrderPage() {
           <Button
             onClick={handleCreateOrder}
             disabled={cart.length === 0}
-            className="w-full"
+            className="w-full mb-6"
             size="lg"
           >
             <IoCheckmark className="w-5 h-5 mr-2" />

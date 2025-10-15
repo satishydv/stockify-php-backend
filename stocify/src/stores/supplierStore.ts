@@ -7,7 +7,7 @@ import { apiClient } from "@/lib/api"
 interface SupplierStore {
   suppliers: Supplier[]
   isLoading: boolean
-  addSupplier: (supplier: Omit<Supplier, "id" | "createdAt" | "updatedAt">) => void
+  addSupplier: (supplier: Omit<Supplier, "id" | "createdAt" | "updatedAt">) => Promise<void>
   deleteSupplier: (id: string) => void
   updateSupplier: (id: string, updates: Partial<Supplier>) => void
   fetchSuppliers: () => Promise<void>
@@ -18,17 +18,30 @@ export const useSupplierStore = create<SupplierStore>((set, get) => ({
   suppliers: [],
   isLoading: false,
   
-  addSupplier: (newSupplier) => set((state) => ({
-    suppliers: [
-      ...state.suppliers,
-      {
-        ...newSupplier,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-      }
-    ]
-  })),
+  addSupplier: async (newSupplier) => {
+    set({ isLoading: true })
+    try {
+      const result = await apiClient.createSupplier({
+        name: newSupplier.name,
+        email: newSupplier.email,
+        phone: newSupplier.phone,
+        companyLocation: newSupplier.companyLocation,
+        gstin: newSupplier.gstin,
+        category: newSupplier.category,
+        website: newSupplier.website,
+        status: newSupplier.status
+      })
+      set((state) => ({
+        suppliers: [...state.suppliers, result.supplier],
+        isLoading: false
+      }))
+    } catch (error) {
+      console.error('Error creating supplier:', error)
+      try { await get().fetchSuppliers() } catch {}
+      set({ isLoading: false })
+      throw error
+    }
+  },
   
   deleteSupplier: (id) => set((state) => ({
     suppliers: state.suppliers.filter((supplier) => supplier.id !== id)

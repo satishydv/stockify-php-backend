@@ -55,7 +55,7 @@ interface Order {
   tax_amount: number | string
   total_amount: number | string
   status: string
-  payment_method: string
+  payment_method: string | null
   transaction_id?: string
   payment_attachment?: string
   payment_date?: string
@@ -248,7 +248,8 @@ const SalesReportPage = () => {
     const methodMap = new Map<string, { count: number, total: number }>()
     
     filteredOrders.forEach(order => {
-      const method = order.payment_method
+      const rawMethod = order.payment_method
+      const method = rawMethod && rawMethod.trim() ? rawMethod.trim().toLowerCase() : 'unknown'
       if (!methodMap.has(method)) {
         methodMap.set(method, { count: 0, total: 0 })
       }
@@ -260,7 +261,7 @@ const SalesReportPage = () => {
     const totalRevenue = filteredOrders.reduce((sum, order) => sum + parseFloat(order.total_amount.toString()), 0)
     
     const paymentStats = Array.from(methodMap.entries()).map(([method, data]) => ({
-      method: method.charAt(0).toUpperCase() + method.slice(1).replace('_', ' '),
+      method: formatPaymentMethod(method),
       count: data.count,
       total: data.total,
       percentage: totalRevenue > 0 ? (data.total / totalRevenue) * 100 : 0
@@ -383,6 +384,13 @@ const SalesReportPage = () => {
       return `Until ${format(toDate, 'dd/MM/yyyy')}`
     }
     return 'All time'
+  }
+
+  const formatPaymentMethod = (methodKey: string) => {
+    if (!methodKey) return 'Unknown'
+    const normalized = methodKey.replace(/_/g, ' ').trim()
+    if (!normalized) return 'Unknown'
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1)
   }
 
   const handleApplyFilter = () => {
@@ -527,9 +535,9 @@ const SalesReportPage = () => {
             <div className="text-2xl font-bold text-purple-600">
               {salesMetrics.uniqueCustomers}
             </div>
-            <p className="text-xs text-muted-foreground">
+            {/* <p className="text-xs text-muted-foreground">
               {salesMetrics.totalItemsSold} items sold
-            </p>
+            </p> */}
           </CardContent>
         </Card>
 

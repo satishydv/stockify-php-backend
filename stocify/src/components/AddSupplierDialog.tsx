@@ -99,7 +99,8 @@ export default function AddSupplierDialog() {
     setIsSubmitting(true)
     
     try {
-      const result = await apiClient.createSupplier({
+      // Let the store handle API create to avoid duplicate requests
+      await addSupplier({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -115,24 +116,6 @@ export default function AddSupplierDialog() {
         website: formData.website || undefined,
         status: formData.status
       })
-
-      // Add supplier to store
-      addSupplier({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          companyLocation: {
-            street: formData.street,
-            city: formData.city,
-            state: formData.state,
-            zip: formData.zip,
-            country: formData.country
-          },
-          gstin: formData.gstin || undefined,
-          category: formData.category,
-          website: formData.website || undefined,
-          status: formData.status
-        })
         
         // Reset form and close dialog
         setFormData(initialFormData)

@@ -16,7 +16,7 @@ function FilterArea() {
   return (
     <div className="flex gap-3">
       {/* status */}
-      <div className="border-dashed border rounded-sm p-1 flex gap-2 items-center px-2 text-sm">
+      <div className="hidden sm:flex border-dashed border rounded-sm p-1 gap-2 items-center px-2 text-sm">
         <span className="text-gray-600">Status</span>
         <Separator orientation="vertical" />
         <div className="flex gap-2 items-center">

@@ -7,7 +7,7 @@ import { apiClient } from "@/lib/api"
 interface RoleStore {
   roles: Role[]
   isLoading: boolean
-  addRole: (role: Omit<Role, "id" | "createdAt" | "updatedAt">) => void
+  addRole: (role: Omit<Role, "id" | "createdAt" | "updatedAt">) => Promise<void>
   deleteRole: (id: string) => Promise<void>
   updateRole: (id: string, updates: Partial<Role>) => void
   updateRolePermissions: (roleId: string, module: string, permission: string, value: boolean) => void
@@ -19,17 +19,18 @@ export const useRoleStore = create<RoleStore>((set, get) => ({
   roles: roles,
   isLoading: false,
   
-  addRole: (newRole) => set((state) => ({
-    roles: [
-      ...state.roles,
-      {
-        ...newRole,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-      }
-    ]
-  })),
+  addRole: async (newRole) => {
+    set({ isLoading: true })
+    try {
+      const result = await apiClient.createRole(newRole)
+      // Prefer refetch to ensure permissions shape
+      await get().fetchRoles()
+    } catch (error) {
+      console.error('Error creating role:', error)
+      set({ isLoading: false })
+      throw error
+    }
+  },
   
   deleteRole: async (id) => {
     try {

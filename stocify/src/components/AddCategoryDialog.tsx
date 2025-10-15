@@ -74,14 +74,8 @@ export default function AddCategoryDialog() {
     setIsSubmitting(true)
     
     try {
-      const result = await apiClient.createCategory({
-        name: formData.name.trim(),
-        code: formData.code.trim().toUpperCase(),
-        status: formData.status
-      })
-
-      // Add category to store
-      addCategory({
+      // Let the store handle API create to avoid duplicate requests
+      await addCategory({
         name: formData.name.trim(),
         code: formData.code.trim().toUpperCase(),
         status: formData.status

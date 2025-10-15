@@ -50,7 +50,7 @@ function DashboardContent({ children }: { children: ReactNode }) {
     <div className="flex">
       <SidebarProvider defaultOpen={true}>
         <AppSidebar />
-        <main className="w-full">
+        <main className="w-full pb-24">
           <Navbar />
           <div className="px-4">{children}</div>
           <footer className="fixed bottom-0 left-0 right-0 bg-blue-50 dark:bg-black text-gray-900 dark:text-white text-center py-3 z-0">

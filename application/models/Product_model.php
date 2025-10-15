@@ -9,12 +9,10 @@ class Product_model extends CI_Model {
     }
     
     public function get_all_products() {
-        // Join with stocks to get real-time quantity_available
-        $this->db->select('p.*, s.quantity_available');
-        $this->db->from('products p');
-        $this->db->join('stocks s', 's.sku = p.sku AND s.delete = 0', 'left');
-        $this->db->where('p.delete', 0);
-        $this->db->order_by('p.created_at', 'DESC');
+        // Return products as-is without joining stocks; quantity is from products.quantity_in_stock
+        $this->db->from('products');
+        $this->db->where('delete', 0);
+        $this->db->order_by('created_at', 'DESC');
         $products = $this->db->get()->result_array();
 
         return array_map(function($product) {
@@ -26,7 +24,7 @@ class Product_model extends CI_Model {
                 'sell_price' => (float)$product['sell_price'],
                 'category' => $product['category'],
                 'status' => $product['status'],
-                'quantityInStock' => isset($product['quantity_available']) ? (int)$product['quantity_available'] : (int)$product['quantity_in_stock'],
+                'quantityInStock' => (int)$product['quantity_in_stock'],
                 'supplier' => $product['supplier'],
                 'branch_name' => $product['branch_name'],
                 'payment_method' => $product['payment_method'],

@@ -104,22 +104,16 @@ export default function UserDialog() {
     setIsSubmitting(true)
     
     try {
-      const result = await apiClient.createUser({
+      // Find the selected role name
+      const selectedRole = roles.find(role => role.id === formData.role_id)
+      
+      // Let the store perform the API call with backend-required payload
+      await addUser({
         name: formData.name,
         email: formData.email,
         password: formData.password,
         address: formData.address,
         role_id: formData.role_id
-      })
-
-      // Find the selected role name
-      const selectedRole = roles.find(role => role.id === formData.role_id)
-      
-      // Add user to store
-      addUser({
-        name: formData.name,
-        email: formData.email,
-        role: selectedRole?.name.toLowerCase() as "admin" | "manager" | "user" || "user"
       })
       
       // Reset form and close dialog

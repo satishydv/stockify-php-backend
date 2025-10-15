@@ -7,7 +7,7 @@ import { apiClient } from "@/lib/api"
 interface CategoryStore {
   categories: Category[]
   isLoading: boolean
-  addCategory: (category: Omit<Category, "id" | "createdAt" | "updatedAt">) => void
+  addCategory: (category: Omit<Category, "id" | "createdAt" | "updatedAt">) => Promise<void>
   deleteCategory: (id: string) => void
   updateCategory: (id: string, updates: Partial<Category>) => void
   fetchCategories: () => Promise<void>
@@ -18,17 +18,27 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
   categories: [],
   isLoading: false,
   
-  addCategory: (newCategory) => set((state) => ({
-    categories: [
-      ...state.categories,
-      {
-        ...newCategory,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-      }
-    ]
-  })),
+  addCategory: async (newCategory) => {
+    set({ isLoading: true })
+    try {
+      const result = await apiClient.createCategory({
+        name: newCategory.name,
+        code: newCategory.code,
+        status: newCategory.status,
+      })
+      // API returns { success, category }
+      set((state) => ({
+        categories: [...state.categories, result.category],
+        isLoading: false,
+      }))
+    } catch (error) {
+      console.error('Error creating category:', error)
+      // Fallback: refetch to stay consistent
+      try { await get().fetchCategories() } catch {}
+      set({ isLoading: false })
+      throw error
+    }
+  },
   
   deleteCategory: (id) => set((state) => ({
     categories: state.categories.filter((category) => category.id !== id)
